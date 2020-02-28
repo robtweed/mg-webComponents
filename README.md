@@ -32,10 +32,9 @@ Then create your JavaScript module (ie *js/wc-demo.js* in the example above):
 
 
         import {webComponents} from '../../mg-webComponents.js';
-        document.addEventListener('DOMContentLoaded', function() {
-        webComponents.setLog(true);
 
         document.addEventListener('DOMContentLoaded', function() {
+          webComponents.setLog(true);
 
           let options = {
             // specify the location of your WebComponents
@@ -52,6 +51,7 @@ Then create your JavaScript module (ie *js/wc-demo.js* in the example above):
             webComponents.loadGroup(sidebarConfigArray, root.sidebarTarget, options);
           });
         });
+
 
 # Methods
 
