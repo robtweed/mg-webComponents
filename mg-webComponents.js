@@ -169,13 +169,13 @@ let webComponents = {
     function invokeComponent(elementClass) {
       let element = new elementClass();
       targetElement.appendChild(element);
+      element.options = options;
+      element.isComponent = true;
       if (element.setState) {
         element.setState({
           webComponents: _this,
         });
       }
-      element.options = options;
-      element.isComponent = true;
       if (callback) callback(element);
     }
 
