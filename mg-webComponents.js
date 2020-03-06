@@ -24,12 +24,14 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 28 February 2020
+ 6 March 2020
 
  */
 
 let registry = {};
 let log = false;
+let customComponents = {};
+let count = 0;
 
 let webComponents = {
   register: function(name, config) {
@@ -38,7 +40,80 @@ let webComponents = {
   setLog: function (state) {
     log = state;
   },
-  getFromRegistry: function(name) {
+  getInstanceFromRegistry: function(name) {
+    if (!registry[name]) return false;
+    return JSON.parse(JSON.stringify(registry[name]));
+  },
+  createCustomComponent: function(name, config) {
+    this.register(name, config);
+  },
+  expandCustomComponent: function(useConfig) {
+    //console.log('expand customComponent - registry: ' + JSON.stringify(registry, null, 2));
+    //console.log('instance config: ' + JSON.stringify(useConfig, null, 2));
+    let state = useConfig.state;
+    let config = this.getInstanceFromRegistry(useConfig.componentName);
+    //console.log('custom component config: ' + JSON.stringify(config, null, 2));
+
+    function processChildren(_config) {
+      if (_config.children && Array.isArray(_config.children)) {
+        _config.children.forEach(function(childConfig) {
+          if (childConfig.state) {
+            let value;
+            for (let name in childConfig.state) {
+              value = childConfig.state[name];
+              if (typeof value === 'string' && value.startsWith('__')) {
+                value = value.split('__')[1];
+                if (state[value]) {
+                  childConfig.state[name] = state[value];
+                }
+                else {
+                  delete childConfig.state[name];
+                }
+                delete state[value];
+              }
+            }
+          }
+          if (typeof childConfig.children === 'string' && childConfig.children == '__children') {
+            if (useConfig.children) {
+              childConfig.children = useConfig.children;
+            }
+            else {
+              delete childConfig.children;
+            } 
+          }
+          processChildren(childConfig);
+        });
+      }
+    }
+
+    processChildren(config);
+    //console.log('state at end: ' + JSON.stringify(state, null, 2));
+    config.state = state;
+
+    //console.log('after expand customComponent - registry: ' + JSON.stringify(registry, null, 2));
+    return config;
+
+  },
+  setCustomComponentElement: function(componentName, name, element) {
+    if (!customComponents[componentName]) {
+      customComponents[componentName] = {};
+    }
+    customComponents[componentName][name] = {
+      element: element
+    };
+  },
+  getCustomComponentElement: function(componentName, name) {
+    if (customComponents[componentName] && customComponents[componentName][name]) {
+      return customComponents[componentName][name].element;
+    }
+  },
+  setCustomComponentChildrenTarget: function(componentName, name, element) {
+    customComponents[componentName][name].childrenTarget = element;
+  },
+  getCustomComponentChildrenTarget: function(componentName, name) {
+    return customComponents[componentName][name].childrenTarget;
+  },
+  getCustomComponent: function(name) {
     return registry[name];
   },
   loadJSFile: function(src, callback) {
@@ -97,9 +172,10 @@ let webComponents = {
       if (element.setState) {
         element.setState({
           webComponents: _this,
-          options: {path: jsPath}
         });
       }
+      element.options = options;
+      element.isComponent = true;
       if (callback) callback(element);
     }
 
@@ -130,55 +206,199 @@ let webComponents = {
       }
     }
   },
-  loadGroup: async function(configArr, targetElement, options) {
+  loadGroup: async function(configArr, targetElement, options, topComponent) {
 
     // The array of components share the same target and must be appended
     // in strict sequence, so this is enforced by this logic..
     options = options || {};
+
+    if (!Array.isArray(configArr)) {
+      configArr = [configArr];
+    }
 
     let _this = this;
     let noOfComponents = configArr.length;
 
     function loadComponent(no) {
       if (no === noOfComponents) return;
-      var config = configArr[no];
+      let config = Object.assign({}, configArr[no]);
+      let targetEl = targetElement;
+      // optional target override
+      if (config.targetElement) targetEl = config.targetElement;
       if (config.componentName) {
-        _this.load(config.componentName, targetElement, options, function(element) {
+        /*
+        let opts = Object.assign({}, options);
+        opts.state = config.state;
+        opts.children = config.children;
+        */
+
+        if (_this.getCustomComponent(config.componentName)) {
+          config = _this.expandCustomComponent(config);
+          //console.log('expanded: ' + JSON.stringify(config, null, 2));
+        }
+
+        _this.load(config.componentName, targetEl, options, function(element) {
           if (log) {
             console.log('load element:');
             console.log(element);
             console.log(targetElement);
-          } 
+          }
+          if (topComponent) element.topComponent = topComponent;
+          element.getParentComponent = _this.getParentComponent.bind(element);
+          element.remove = _this.remove.bind(element);
+          element.getComponentByName = _this.getComponentByName.bind(_this); 
+          element.addHandler = _this.addHandler; 
           if (config.state) {
-            element.setState(config.state, function() {
-              // the setState callback ensures that the next component isn't
-              // processed until the current one is completely appended to the target
-              if (element.onLoaded) {
-                element.onLoaded();
+            if (config.state.cardTitle) {
+              console.log(333333);
+              console.log(JSON.stringify(config.state, null, 2));
+            }
+            if (element.setState) {
+              /*
+              let value;
+              for (let name in config.state) {
+                value = config.state[name];
+                if (typeof value === 'string' && value.startsWith('__')) {
+                  value = value.split('__')[1];
+                  if (topComponent && topComponent.state && topComponent.state[value]) {
+                    config.state[name] = topComponent.state[value];
+                    if (!topComponent.childStates) topComponent.childStates = [];
+                    topComponent.childStates.push({
+                      element: element,
+                      topName: value,
+                      name: name
+                    });
+                    console.log(22222);
+                    console.log(topComponent.childStates);
+                  }
+                } 
               }
-              loadComponent(no + 1);
+              */
+              element.setState(config.state);
+
+              /*
+              // set up name index for custom Component to allow its discovery by name
+              if (config.customComponent) {
+                if (!element.name) {
+                  count++;
+                  element.name = 'customComponent-' + count;
+                }
+                _this.setCustomComponentElement(config.customComponent, element.name, element);
+                if (config.customChildren) {
+                  element.customChildren = config.customChildren;
+                }
+              }
+
+              // augment the setState method of the group's top component to update
+              // any child component states, where linked
+
+              if (!topComponent) {
+                element.state = config.state;
+                let fnx = element.setState.bind(element);
+                element.setState = function(state) {
+                  fnx(state);
+                  console.log(111111);
+                  console.log(this.childStates);
+                  if (this.childStates) {
+                    this.childStates.forEach(function(obj) {
+                      let xstate = {};
+                      xstate[obj.name] = state[obj.topName];
+                      obj.element.setState.call(obj.element, xstate);
+                    });
+                  }
+                };
+                element.setState.bind(element);
+                element.setState(config.state);
+              }
+              */
+            }
+          }
+          /*
+          if (config.customChildrenTarget && topComponent) {
+            config.children = topComponent.customChildren;
+          }
+          */
+          if (element.onLoaded) {
+            element.onLoaded();
+          }
+          // invoke any hooks
+          if (config.hooks && options.hooks) {
+            config.hooks.forEach(function(hook) {
+              if (options.hooks[config.componentName] && options.hooks[config.componentName][hook]) {
+                try {
+                  options.hooks[config.componentName][hook].call(element, config.state);
+                }
+                catch(err) {
+                  if (log) {
+                    console.log('Unable to execute hook ' + name + ' for ' + config.componentName);
+                    console.log(err);
+                  }
+                }
+              }
             });
           }
-          else {
-            loadComponent(no + 1);
+          if (config.children && element.childrenTarget) {
+            _this.loadGroup(config.children, element.childrenTarget, options, topComponent || element);
           }
+          loadComponent(no + 1);
         });
-      }
-      else if (options.QEWD && config.fragmentName) {
-        let span = document.createElement('span');
-        span.id = 'inserted-fragment-' + no;
-        console.log('targetElement');
-        console.log(targetElement);
-        targetElement.appendChild(span);
-        options.QEWD.getFragment({
-          name: config.fragmentName,
-          targetId: span.id
-        }, function(file) {
-        });
-        loadComponent(no + 1);
       }
     }
     loadComponent(0);
+  },
+  getParentComponent(options) {
+    options = options || {};
+    let prefix = options.prefix || this.tagName.split('-')[0];
+    function findParent(node) {
+      node = node.parentNode;
+      if (!node) return null;
+      if (options.match) {
+        if (node.tagName === options.match.toUpperCase()) return node;
+      }
+      else {
+        if (node.tagName.startsWith(prefix)) return node;
+      }
+      return findParent(node);
+    }
+    return findParent(this);
+  },
+  getComponentByName(componentName, name) {
+    let customComponentElement = this.getCustomComponentElement(componentName, name);
+    if (customComponentElement) return customComponentElement;
+    let modals = [...document.getElementsByTagName(componentName)];
+    let i;
+    for (i = 0; i < modals.length; i++) {
+      if (modals[i].name === name) {
+        return modals[i];
+      }
+    }
+    return;
+  },
+  addHandler: function(fn, targetElement, type) {
+    type = type || 'click';
+    targetElement = targetElement || 'rootElement';
+    let target = this[targetElement];
+    target.addEventListener(type, fn);
+    this.onUnload = function() {
+      target.removeEventListener(type, fn);
+    }
+  },
+  remove: function() {      
+    // remove component and all its sub-components
+    //  to ensure their disconnectedCallbacks fire
+    function getChildren(node) {
+      let children = [...node.childNodes];
+      children.forEach(function(child) {
+        if (child.nodeType === 1) {
+          getChildren(child);
+          if (child.isComponent) {
+            child.parentNode.removeChild(child);
+          }
+        }
+      });
+    }
+    getChildren(this);
+    this.parentNode.removeChild(this);
   }
 };
 
