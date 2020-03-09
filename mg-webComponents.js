@@ -24,7 +24,7 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 6 March 2020
+ 9 March 2020
 
  */
 
@@ -153,23 +153,29 @@ let webComponents = {
     }
     document.getElementsByTagName('head')[0].appendChild(meta);
   }, 
-  load: async function(componentName, targetElement, options, callback) {
+  load: async function(componentName, targetElement, context, callback) {
+    let namespace = componentName.split('-')[0];
+    console.log('*** load ' + componentName);
     let _this = this;
-    if (options && !callback && typeof options === 'function') {
-      callback = options;
-      options = {};
+    if (context && !callback && typeof context === 'function') {
+      callback = context;
+      context = {};
     }
-    if (!options && !callback && typeof targetElement === 'function') {
+    if (!context && !callback && typeof targetElement === 'function') {
       callback = targetElement;
       targetElement = false;
-      options = {};
+      context = {};
     }
-    let jsPath = options.path || './';
+
+    //console.log('namespace = ' + namespace);
+    //console.log('context: ' + JSON.stringify(context, null, 2));
+    let jsPath = context.path || './';
+    if (context.paths && context.paths[namespace]) jsPath = context.paths[namespace];
 
     function invokeComponent(elementClass) {
       let element = new elementClass();
       targetElement.appendChild(element);
-      element.options = options;
+      element.context = context;
       element.isComponent = true;
       if (element.setState) {
         element.setState({
@@ -206,11 +212,11 @@ let webComponents = {
       }
     }
   },
-  loadGroup: async function(configArr, targetElement, options, topComponent) {
+  loadGroup: async function(configArr, targetElement, context, topComponent) {
 
     // The array of components share the same target and must be appended
     // in strict sequence, so this is enforced by this logic..
-    options = options || {};
+    context = context || {};
 
     if (!Array.isArray(configArr)) {
       configArr = [configArr];
@@ -226,18 +232,13 @@ let webComponents = {
       // optional target override
       if (config.targetElement) targetEl = config.targetElement;
       if (config.componentName) {
-        /*
-        let opts = Object.assign({}, options);
-        opts.state = config.state;
-        opts.children = config.children;
-        */
 
         if (_this.getCustomComponent(config.componentName)) {
           config = _this.expandCustomComponent(config);
           //console.log('expanded: ' + JSON.stringify(config, null, 2));
         }
 
-        _this.load(config.componentName, targetEl, options, function(element) {
+        _this.load(config.componentName, targetEl, context, function(element) {
           if (log) {
             console.log('load element:');
             console.log(element);
@@ -247,86 +248,20 @@ let webComponents = {
           element.getParentComponent = _this.getParentComponent.bind(element);
           element.remove = _this.remove.bind(element);
           element.getComponentByName = _this.getComponentByName.bind(_this); 
-          element.addHandler = _this.addHandler; 
-          if (config.state) {
-            if (config.state.cardTitle) {
-              console.log(333333);
-              console.log(JSON.stringify(config.state, null, 2));
-            }
-            if (element.setState) {
-              /*
-              let value;
-              for (let name in config.state) {
-                value = config.state[name];
-                if (typeof value === 'string' && value.startsWith('__')) {
-                  value = value.split('__')[1];
-                  if (topComponent && topComponent.state && topComponent.state[value]) {
-                    config.state[name] = topComponent.state[value];
-                    if (!topComponent.childStates) topComponent.childStates = [];
-                    topComponent.childStates.push({
-                      element: element,
-                      topName: value,
-                      name: name
-                    });
-                    console.log(22222);
-                    console.log(topComponent.childStates);
-                  }
-                } 
-              }
-              */
-              element.setState(config.state);
+          element.addHandler = _this.addHandler.bind(element);
 
-              /*
-              // set up name index for custom Component to allow its discovery by name
-              if (config.customComponent) {
-                if (!element.name) {
-                  count++;
-                  element.name = 'customComponent-' + count;
-                }
-                _this.setCustomComponentElement(config.customComponent, element.name, element);
-                if (config.customChildren) {
-                  element.customChildren = config.customChildren;
-                }
-              }
-
-              // augment the setState method of the group's top component to update
-              // any child component states, where linked
-
-              if (!topComponent) {
-                element.state = config.state;
-                let fnx = element.setState.bind(element);
-                element.setState = function(state) {
-                  fnx(state);
-                  console.log(111111);
-                  console.log(this.childStates);
-                  if (this.childStates) {
-                    this.childStates.forEach(function(obj) {
-                      let xstate = {};
-                      xstate[obj.name] = state[obj.topName];
-                      obj.element.setState.call(obj.element, xstate);
-                    });
-                  }
-                };
-                element.setState.bind(element);
-                element.setState(config.state);
-              }
-              */
-            }
+          if (config.state  && element.setState) {
+            element.setState(config.state);
           }
-          /*
-          if (config.customChildrenTarget && topComponent) {
-            config.children = topComponent.customChildren;
-          }
-          */
           if (element.onLoaded) {
             element.onLoaded();
           }
           // invoke any hooks
-          if (config.hooks && options.hooks) {
+          if (config.hooks && context.hooks) {
             config.hooks.forEach(function(hook) {
-              if (options.hooks[config.componentName] && options.hooks[config.componentName][hook]) {
+              if (context.hooks[config.componentName] && context.hooks[config.componentName][hook]) {
                 try {
-                  options.hooks[config.componentName][hook].call(element, config.state);
+                  context.hooks[config.componentName][hook].call(element, config.state);
                 }
                 catch(err) {
                   if (log) {
@@ -338,7 +273,7 @@ let webComponents = {
             });
           }
           if (config.children && element.childrenTarget) {
-            _this.loadGroup(config.children, element.childrenTarget, options, topComponent || element);
+            _this.loadGroup(config.children, element.childrenTarget, context, topComponent || element);
           }
           loadComponent(no + 1);
         });
@@ -375,12 +310,30 @@ let webComponents = {
     return;
   },
   addHandler: function(fn, targetElement, type) {
+    if (!type && typeof targetElement === 'string') {
+      type = targetElement;
+      targetElement = null;
+    }
     type = type || 'click';
-    targetElement = targetElement || 'rootElement';
-    let target = this[targetElement];
-    target.addEventListener(type, fn);
-    this.onUnload = function() {
-      target.removeEventListener(type, fn);
+    targetElement = targetElement || this.rootElement;
+    targetElement.addEventListener(type, fn);
+    if (!this.listeners) this.listeners = [];
+    this.listeners.push({
+      type: type,
+      fn: fn,
+      target: targetElement
+    });
+    let _this = this;
+    if (!this.onUnload) {
+      this.onUnload = function() {
+        if (_this.listeners) {
+          _this.listeners.forEach(function(listener) {
+            console.log('removing listener');
+            console.log(listener);
+            listener.target.removeEventListener(listener.type, listener.fn);
+          });
+        }
+      }
     }
   },
   remove: function() {      
