@@ -34,6 +34,23 @@ let customComponents = {};
 let count = 0;
 
 let webComponents = {
+  components: {},
+  hooks: {},
+  addComponent: function(componentName, config) {
+    if (!componentName) return;
+    if (!config) return;
+    let component;
+    let name;
+    if (config.hooks) {
+      for (component in config.hooks) {
+        if (!this.hooks[component]) this.hooks[component] = {};
+        for (name in config.hooks[component]) {
+          this.hooks[component][name] = config.hooks[component][name];
+        }
+      }
+    }
+    if (config.component) this.components[componentName] = config.component;
+  },
   register: function(name, config) {
     registry[name] = config;
   },
