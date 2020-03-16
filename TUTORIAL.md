@@ -7,7 +7,7 @@
 of WebComponents.
 
 *mg-webComponents* is designed to be completely dynamic, avoiding the need for bundling or pre-compiling.
-As per the true spirit of the web architecture, verything is fetched from the web server dynamically as and when needed.
+As per the true spirit of the web architecture, everything is fetched from the web server dynamically as and when needed.
 
 
 *mg-webComponents* makes use of the built-in capabilities of modern browsers, and therefore requires no other
@@ -192,7 +192,7 @@ you'll find it all a lot simpler without Shadow DOM.
 
 You'll find that, typically, most of your WebComponents will actually contain very little
 HTML.  Often they will just contain a single tag, as in our example which just contains a
-single <div> tag.  
+single &lt;div&gt; tag.  
 
 Define the markup using the following pattern:
 
@@ -334,7 +334,7 @@ described above.
 
 
 
-if you look carefully, you'll see that the only difference between this and the template is that its *setState()* method adds a *text* property that will allow us to add a text string inside the <div> tag 
+if you look carefully, you'll see that the only difference between this and the template is that its *setState()* method adds a *text* property that will allow us to add a text string inside the &lt;div&gt; tag 
 (via *this.rootElement.textContent*):
 
         setState(state) {
@@ -566,7 +566,7 @@ You should see:
 
 
 So the key thing is that you can see that the <tutorial-div-simple> tag was loaded, containing
-the <div> tag it defines, with the text value defined by the state we specified in our Component
+the &lt;div&gt; tag it defines, with the text value defined by the state we specified in our Component
 assembly definition.
 
 In other words, our assembly definition:
@@ -586,9 +586,14 @@ resolved into:
 
 
 Of course, this is a very simple trivial example, and it would appear to be complete overkill if
-all we want to do is create a <div> tag with some text.  However, this trivially simple example
+all we want to do is create a &lt;div&gt;  tag with some text.  However, this trivially simple example
 has already demonstrated most of the key steps that you can use to build out complex, dynamic, 
 highly interactive web applications.
+
+The real power and flexibility of the *mg-webComponents* framework comes from being able to define
+hierarchical assemblies of (usually individually very simple) WebComponents.  Each individual
+WebComponent can be used and re-used within Assemblies, and you can build your application from
+multiple Assemblies.  Furthermore, for even more power, each Web Assembly can be defined as a template assembly that can be applied and modified through its state.
 
 In the next part of the Tutorial we'll build on this simple example, and hopefully the benefits
 of this WebComponent approach will begin to become clear.
