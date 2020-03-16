@@ -24,13 +24,13 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 9 March 2020
+ 15 March 2020
 
  */
 
 let registry = {};
 let log = false;
-let customComponents = {};
+//let customComponents = {};
 let count = 0;
 
 let webComponents = {
@@ -65,8 +65,6 @@ let webComponents = {
     this.register(name, config);
   },
   expandCustomComponent: function(useConfig) {
-    //console.log('expand customComponent - registry: ' + JSON.stringify(registry, null, 2));
-    //console.log('instance config: ' + JSON.stringify(useConfig, null, 2));
     let state = useConfig.state;
     let config = this.getInstanceFromRegistry(useConfig.componentName);
     //console.log('custom component config: ' + JSON.stringify(config, null, 2));
@@ -106,11 +104,10 @@ let webComponents = {
     processChildren(config);
     //console.log('state at end: ' + JSON.stringify(state, null, 2));
     config.state = state;
-
-    //console.log('after expand customComponent - registry: ' + JSON.stringify(registry, null, 2));
     return config;
 
   },
+  /*
   setCustomComponentElement: function(componentName, name, element) {
     if (!customComponents[componentName]) {
       customComponents[componentName] = {};
@@ -130,6 +127,7 @@ let webComponents = {
   getCustomComponentChildrenTarget: function(componentName, name) {
     return customComponents[componentName][name].childrenTarget;
   },
+  */
   getCustomComponent: function(name) {
     return registry[name];
   },
@@ -172,7 +170,7 @@ let webComponents = {
   }, 
   load: async function(componentName, targetElement, context, callback) {
     let namespace = componentName.split('-')[0];
-    console.log('*** load ' + componentName);
+    if (log) console.log('*** load ' + componentName);
     let _this = this;
     if (context && !callback && typeof context === 'function') {
       callback = context;
@@ -263,9 +261,12 @@ let webComponents = {
           }
           if (topComponent) element.topComponent = topComponent;
           element.getParentComponent = _this.getParentComponent.bind(element);
+          element.onUnload = _this.onUnload.bind(element);
+          element.registerUnloadMethod = _this.registerUnloadMethod.bind(element);
           element.remove = _this.remove.bind(element);
           element.getComponentByName = _this.getComponentByName.bind(_this); 
           element.addHandler = _this.addHandler.bind(element);
+          element.methodsToRemove = [];
 
           if (config.state  && element.setState) {
             element.setState(config.state);
@@ -300,6 +301,9 @@ let webComponents = {
   },
   getParentComponent(options) {
     options = options || {};
+    if (typeof options === 'string') {
+      options = {match: options};
+    }
     let prefix = options.prefix || this.tagName.split('-')[0];
     function findParent(node) {
       node = node.parentNode;
@@ -315,13 +319,13 @@ let webComponents = {
     return findParent(this);
   },
   getComponentByName(componentName, name) {
-    let customComponentElement = this.getCustomComponentElement(componentName, name);
-    if (customComponentElement) return customComponentElement;
-    let modals = [...document.getElementsByTagName(componentName)];
+    //let customComponentElement = this.getCustomComponentElement(componentName, name);
+    //if (customComponentElement) return customComponentElement;
+    let node = [...document.getElementsByTagName(componentName)];
     let i;
-    for (i = 0; i < modals.length; i++) {
-      if (modals[i].name === name) {
-        return modals[i];
+    for (i = 0; i < node.length; i++) {
+      if (node[i].name === name) {
+        return node[i];
       }
     }
     return;
@@ -340,18 +344,31 @@ let webComponents = {
       fn: fn,
       target: targetElement
     });
-    let _this = this;
-    if (!this.onUnload) {
-      this.onUnload = function() {
-        if (_this.listeners) {
-          _this.listeners.forEach(function(listener) {
-            console.log('removing listener');
-            console.log(listener);
-            listener.target.removeEventListener(listener.type, listener.fn);
-          });
-        }
-      }
+  },
+  registerUnloadMethod(fn) {
+    this.methodsToRemove.push(fn);
+  },
+  onUnload: function() {
+    if (log) {
+      console.log('onUnload');
+      console.log(this);
     }
+    if (this.listeners) {
+      this.listeners.forEach(function(listener) {
+        if (log) {
+          console.log('removing listener');
+          console.log(listener);
+        }
+        listener.target.removeEventListener(listener.type, listener.fn);
+      });
+    }
+    this.methodsToRemove.forEach(function(method) {
+      if (log) {
+        console.log('invoking custom unload method');
+        console.log(method);
+      }
+      method();
+    });
   },
   remove: function() {      
     // remove component and all its sub-components
@@ -369,6 +386,76 @@ let webComponents = {
     }
     getChildren(this);
     this.parentNode.removeChild(this);
+  },
+  parse: function(input) {
+    let xml = '<xml>' + input + '</xml>';
+    let parser = new DOMParser();
+    let dom = parser.parseFromString(xml, 'text/xml');
+
+    let component = [];
+
+    function getChildren(element, comp) {
+      let children = [...element.childNodes];
+      children.forEach(function(child) {
+        if (child.nodeType === 1) {
+          let component = {
+            componentName: child.tagName
+          };
+          if (child.hasAttributes()) {
+            component.state = {};
+            let attrs = [...child.attributes];
+            let attrObjs = {};
+            attrs.forEach(function(attr) {
+              let value = attr.value;
+              if (value === 'true') {
+                value = true;
+              }
+              else if (value === 'false') value = false;
+              else {
+                try {
+                  value = JSON.parse(value);
+                }
+                catch(err) {
+                }
+              }
+              if (attr.name === 'hook') {
+                component.hooks = [value];
+              }
+              else {
+                if (attr.name.includes('.')) {
+                  let pcs = attr.name.split('.');
+                  let len = pcs.length;
+                  let ref = attrObjs;
+                  pcs.forEach(function(p, index) {
+                    if (!ref[p]) ref[p] = {};
+                    if (index === (len - 1)) {
+                      ref[p] = value;
+                    }
+                    else {
+                      ref = ref[p];
+                    }
+                  });
+                }
+                else {
+                  component.state[attr.name] = value;
+                }
+              }
+            });
+            for (let name in attrObjs) {
+              component.state[name] = attrObjs[name];
+            }
+          }
+          if (child.hasChildNodes()) {
+            component.children = [];
+            getChildren(child, component.children);
+          }
+          comp.push(component);
+        }
+      });
+    }
+
+    getChildren(dom.documentElement, component);
+    return component;
   }
 };
 
