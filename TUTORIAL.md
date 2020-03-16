@@ -569,7 +569,7 @@ You should see:
 
 
 So the key thing to observe is that the &lt;tutorial-div-simple&gt; tag was loaded into the &lt;body&gt; tag.
-In, in turn, contains the &lt;div&gt; tag that we defined in the *tutorial-div-simple* WebComponent.
+It, in turn, contains the &lt;div&gt; tag that we defined in the *tutorial-div-simple* WebComponent.
 Finally, the  &lt;div&gt; tag has been given the text value defined by the state we specified in our 
 WebComponent Assembly definition.
 
