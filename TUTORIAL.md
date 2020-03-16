@@ -496,7 +496,7 @@ The *loadGroup()* method takes three arguments:
           webComponents.addComponent('step1', define_step1());
 
 - the DOM element to which your assembly of components is to be appended.  In our case we'll add
-our component assembly to the <body> tag of our web page.  
+our component assembly to the &lt;body&gt; tag of our web page.  
 
 - the context object that we defined in the earlier step above.
   
@@ -511,7 +511,7 @@ So, in our example, we invoke:
 
 Now that everything else is prepared and built, you finaly need to create the base HTML file that you will
 load into your web server.  Take a look at the */tutorial/step1.html* file.  This shows the
-pattern that you should always follow:
+very simple pattern that you should always follow:
 
         <!DOCTYPE html>
         <html lang="en">
@@ -523,8 +523,11 @@ pattern that you should always follow:
           </body>
         </html>
 
-Note the key step within the <body> tag which loads the *app1.js* module described in the previous section
-above.
+Note the key step within the &lt;body&gt; tag which loads the *app1.js* module described in the previous section
+above:
+
+            <script type="module" src="js/app1.js"></script>
+
 
 
 # Load the Web Page
@@ -541,35 +544,36 @@ In the browser you should see:
 
 and in the JavaScript console:
 
-*** load tutorial-div-simple
-** component tutorial-div-simple had to be loaded
-load element:
- <tutorial-div-simple>?…?</tutorial-div-simple>?
- <body>?…?</body>?
+        *** load tutorial-div-simple
+        ** component tutorial-div-simple had to be loaded
+        load element:
+         <tutorial-div-simple> </tutorial-div-simple>
+         <body> </body>
 
 Next, click on the *Elements* (or equivalent) tab of your JavaScript console to see the actual DOM elements.
 You should see:
 
-<html lang="en">
-  <head>
-    <title>mg-WebComponents Tutorial Step 1</title>
-    <style type="text/css"></style>
-  </head>
+        <html lang="en">
+          <head>
+            <title>mg-WebComponents Tutorial Step 1</title>
+            <style type="text/css"></style>
+          </head>
+        
+          <body>
+            <script type="module" src="js/app1.js"></script>
+            <tutorial-div-simple>
+             <div>Hello World</div>
+            </tutorial-div-simple>
+          </body>
+        </html>
 
-  <body>
-    <script type="module" src="js/app1.js"></script>
-    <tutorial-div-simple>
-     <div>Hello World</div>
-    </tutorial-div-simple>
-  </body>
-</html>
 
+So the key thing to observe is that the &lt;tutorial-div-simple&gt; tag was loaded into the &lt;body&gt; tag.
+In, in turn, contains the &lt;div&gt; tag that we defined in the *tutorial-div-simple* WebComponent.
+Finally, the  &lt;div&gt; tag has been given the text value defined by the state we specified in our 
+WebComponent Assembly definition.
 
-So the key thing is that you can see that the <tutorial-div-simple> tag was loaded, containing
-the &lt;div&gt; tag it defines, with the text value defined by the state we specified in our Component
-assembly definition.
-
-In other words, our assembly definition:
+in other words, this WebComponent Assembly definition:
 
           let component = {
             componentName: 'tutorial-div-simple',
@@ -578,15 +582,18 @@ In other words, our assembly definition:
             }
           }
 
-resolved into:
+was resolved into:
 
         <tutorial-div-simple>
          <div>Hello World</div>
         </tutorial-div-simple>
 
 
-Of course, this is a very simple trivial example, and it would appear to be complete overkill if
-all we want to do is create a &lt;div&gt;  tag with some text.  However, this trivially simple example
+Of course, this is a very simple trivial example, and, at this stage you're probably thinking
+ this is complete overkill if
+all we want to do is create a &lt;div&gt;  tag with some text in it!  
+
+However, this trivially simple example
 has already demonstrated most of the key steps that you can use to build out complex, dynamic, 
 highly interactive web applications.
 
