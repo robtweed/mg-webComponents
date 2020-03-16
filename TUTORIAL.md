@@ -3,23 +3,23 @@
 
 # What is mg-webComponents?
 
-*mg-webComponents* is a module that allows you to build web applications from hierarchical sets
+*mg-webComponents* is a module that allows you to build web applications from hierarchical assemblies
 of WebComponents.
 
-*mg-webComponents* is designed to be completely dynamic, avoiding the need for bundling or compiling.
-Everything is fetched from the web server as and when needed.
+*mg-webComponents* is designed to be completely dynamic, avoiding the need for bundling or pre-compiling.
+As per the true spirit of the web architecture, verything is fetched from the web server dynamically as and when needed.
 
 
 *mg-webComponents* makes use of the built-in capabilities of modern browsers, and therefore requires no other
 framework in order to work.  It is a very lightweight and high-performance solution to web application
-development.
+development, and is based on a deliberately very small set of patterns which allow you to quickly and simply build applications of any degree of complexity.
 
 # Getting Started
 
 The easiest way to try out *mg-webComponents* is to download and start the latest Dockerised version
 of QEWD, eg see [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb) or [QEWD-baseline](https://github.com/robtweed/qewd-baseline).
 
-However, *mg-webComponents* has no dependency on QEWD, and can be installed and used standalone.
+However, *mg-webComponents* has no dependency on QEWD, and can be installed and used standalone with any web server.
 
 To prepare your own *mg-webComponents* system, simply copy the file 
 [mg-webComponents.js](https://github.com/robtweed/mg-webComponents/blob/master/mg-webComponents.js)
@@ -27,7 +27,7 @@ to your web server's root directory.
 
 To fetch the *mg-webComponents* repository, either:
 
-        git clone https://github.com/robtweed/mg-webComponents*
+        git clone https://github.com/robtweed/mg-webComponents
 
 or:
 
@@ -55,7 +55,7 @@ If you are using the Dockerised version of QEWD:
 
 ## Standalone Installation
 
-- In the *mg-webComponents* repository, you'll find a folder named *tutorial*
+- In the copy of the *mg-webComponents* repository that you've installed, you'll find a folder named *tutorial*
 
 - Create two sub-folders under your web server's root directory:
 
@@ -100,12 +100,16 @@ So, for example, if your web server root directory was /opt/nginx/www, you shoul
 
 You're now ready to begin the Tutorial
 
-# The WebComponents Pattern to use with *mg-webComponents*
+# The WebComponents Pattern
 
-The */components/tutorial* folder that you created above will contain some
-simple examples of WebComponents, created for use with *mg-webComponents*
+*mg-webComponents* uses standard WebComponents.  However, it expects them to be defined and
+used according to a specific pattern.  Let's take a look at the first part of that pattern,
+specifically how you should define each of your WebComponents.
 
-The basic pattern to follow is shown in *tutorial-template.js*:
+The */components/tutorial* folder that you created in the previous step contains some
+simple examples of WebComponents, created for use with *mg-webComponents*.
+
+The basic pattern to always follow is shown in *tutorial-template.js*:
 
         export function load() {
 
@@ -148,7 +152,7 @@ The basic pattern to follow is shown in *tutorial-template.js*:
 
 Let's go through the important pieces of this pattern:
 
-## Your WebComponents should export a function named *load*
+## 1) Your WebComponents should export a function named *load*
 
 
 Always wrap your WebComponents inside:
@@ -156,11 +160,11 @@ Always wrap your WebComponents inside:
         export function load() {
         };
 
-## The first part of your WebComponent name is its namespace
+## 2) The first part of your WebComponent name is its namespace
 
 WebComponent tag names must always be hyphenated: that's part of the standard.  However, in
 *mg-webComponents*, the convention is that the first part of your WebComponent names defines its
-namespace. You can have as many namespaces as you like.  In our case, we're going to just use one:
+*namespace*. You can have as many namespaces as you like.  In our case, we're going to just use one:
 *tutorial*.  So all our WebComponents will be named *tutorial-{{something}}*, eg in the above case,
 *tutorial-template*.
 
@@ -176,7 +180,7 @@ WebComponent's class name.  So we'll use *tutorial_template* for our example abo
 
           customElements.define(componentName, class tutorial_template extends HTMLElement {
 
-## YOu Don't Need to use Shadow DOM
+## 3) You Don't Need to use Shadow DOM
 
 In all the examples we're going to use, we **won't** be using the Shadow DOM capability of 
 WebComponents.  You *can* use the Shadow DOM with *mg-webComponents*, but it isn't essential,
@@ -184,7 +188,7 @@ and, if using *mg-webComponents* with a framework such as [Bootstrap 4](https://
 you'll find it all a lot simpler without Shadow DOM.
 
 
-## Define the HTML for your WebComponent
+## 4) Define the HTML for your WebComponent
 
 You'll find that, typically, most of your WebComponents will actually contain very little
 HTML.  Often they will just contain a single tag, as in our example which just contains a
@@ -198,7 +202,7 @@ Define the markup using the following pattern:
 
       this.html = `${html}`;
 
-## Always add a method named *setState*
+## 5) Always add a method named *setState*
 
 All your WebComponents should include this method, via which you will be able to control and modify
 the internal state of the WebComponent.
@@ -214,12 +218,12 @@ So, for example:
       }
     }
 
-## Always add the *connectedCallback* method
+## 6) Always add the *connectedCallback* method
 
 The *connectedCallback* method is a standard part of WebComponents - this method, if defined,
 is fired when the WebComponent is attached to the DOM (eg using *appendChild*).
 
-In the *connectedCallback* method, you should **ALWAYS**:
+Within the *connectedCallback* method, you should **ALWAYS** do the following as a minimum:
 
 - if you're not using Shadow DOM, add the HTML you defined for the WebComponent 
 as its *innerHTML* property 
@@ -227,15 +231,16 @@ as its *innerHTML* property
       this.innerHTML = this.html;
 
 - define a *rootElement* property which should be the root (or outermost) tag of the 
-HTML within your WebComponent.  So in our example it will be the <div> tag itself:
+HTML within your WebComponent.  So in our example it will be the &lt;div&gt; tag itself:
 
       this.rootElement = this.getElementsByTagName('div')[0];
 
-- If you want to be able to nest other WebComponents within your WebComponent, define a
+- If you want to be able to nest other WebComponents within your WebComponent (which will almost always be the case), define a
 property named *childrenTarget* which will be the actual HTML tag within your WebComponent
-within which you want that nesting to occur.
+within which you want that nesting to occur.  *mg-webComponents* will look for this property when
+trying to render your nested assemblies of WebComponents.
 
-  In our case, that will be the <div> tag itself, so:
+  In our case, we will want to be able to nest the &lt;div&gt; tag itself, so we specify:
 
       this.childrenTarget = this.rootElement;
 
@@ -258,8 +263,10 @@ using this counter in conjunction with the WebComponent's name:
 
         this.name = componentName + '-' + count;
 
+    This will mean that each instance of the WebComponent will have a unique name property.
 
-## Always add the *disconnectedCallback* method
+
+## 7) Always add the *disconnectedCallback* method
 
 The *disconnectedCallback* method is a standard part of WebComponents - this method, if defined,
 is fired when the WebComponent is detached from the DOM (eg using *removeChild*).
@@ -281,8 +288,53 @@ special functionality (see later).
 # Create your WebComponent
 
 Take a look at */components/tutorial-div-simple.js* which is based on the template
-described above.  The only difference is that its *setState()* method adds a *text*
-property which will allow us to add a text string inside the <div> tag 
+described above.  
+
+        export function load() {
+        
+          let componentName = 'tutorial-div-simple';
+          let count = -1;
+        
+          customElements.define(componentName, class tutorial_div_simple extends HTMLElement {
+            constructor() {
+              super();
+        
+              count++;
+        
+              const html = `
+        <div></div>
+              `;
+        
+              this.html = `${html}`;
+            }
+        
+            setState(state) {
+              if (state.name) {
+                this.name = state.name;
+              }
+              // add text
+              if (state.text) {
+                this.rootElement.textContent = state.text;
+              }
+            }
+        
+            connectedCallback() {
+              this.innerHTML = this.html;
+              this.rootElement = this.getElementsByTagName('div')[0];
+              this.childrenTarget = this.rootElement;
+              this.name = componentName + '-' + count;
+            }
+        
+            disconnectedCallback() {
+              if (this.onUnload) this.onUnload();
+            }
+        
+          });
+        };
+
+
+
+if you look carefully, you'll see that the only difference between this and the template is that its *setState()* method adds a *text* property that will allow us to add a text string inside the <div> tag 
 (via *this.rootElement.textContent*):
 
         setState(state) {
@@ -296,12 +348,15 @@ property which will allow us to add a text string inside the <div> tag
         }
 
 
-# Using your WebComponents (Part 1)
+# Define your WebComponent Assembly
 
 The next step is to define how you're going to use one or more of your WebComponents.  You do this
-by defining a JSON object that defines a set of one or more WebComponents.
+by defining a JSON object that defines an assembly of one or more nested WebComponents.
 
-Take a look at your */js/step1.js* file for a simple example:
+Take a look at your */js/step1.js* file for a very simple example which is just going to define an
+assembly that consists of a single (un-nested) instance of the *tutorial-div-simple* WebComponent
+that we described in the previous section:
+
 
         export function define_step1() {
         
@@ -318,7 +373,7 @@ Take a look at your */js/step1.js* file for a simple example:
 
 Note the following key parts of the pattern above:
 
-## Your definition should export a uniquely-named function
+## 1) Your definition should export a uniquely-named function
 
 In our case we'll call that function *define_step1*.
 
@@ -327,12 +382,11 @@ In our case we'll call that function *define_step1*.
         };
 
 
-## Define a JSON Object named *component*
+## 2) Define your assembly as a JSON Object named *component*
 
-This JSON object will define the WebComponent(s) we want to use, and apply state properties to it/then
-when they are loaded.
+This JSON object will define the assembly of WebComponent(s) you want to use, and apply state properties to it/them when loaded.
 
-So in our example above, we're just using/loading a single WebComponent - our *tutorial-dev-simple*
+In our simple example above, we're just using/loading a single WebComponent - our *tutorial-dev-simple*
 one, and then setting its *text* state property.  Doing so will cause the *tutorial-dev-simple*
 WebComponent's *setState()* method to fire.
 
@@ -343,14 +397,14 @@ WebComponent's *setState()* method to fire.
             }
           }
 
-## Return the component object on completion of the exported function
+## 3) Return the component object on completion of the exported function
 
           return {component};
 
 
-# Using your WebComponents (Part 2)
+# Loading/Rendering your WebComponent Assembly
 
-The next step is to apply the JSON *component* object you created in the previous step using the
+The next step is to load and render the WebComponent assembly *component* JSON object you created in the previous step using the
 *mg-webComponents* module.  To do this we'll create an ES6 Module that will be loaded into our
 web page.  Once again, just follow the pattern I'll describe and explain below.
 
@@ -369,49 +423,52 @@ step you through:
           webComponents.loadGroup(webComponents.components.step1, document.getElementsByTagName('body')[0], context);
         document.addEventListener('DOMContentLoaded', function() {
 
-## Import the *mg-webComponents.js* Module
+## 1) Import the *mg-webComponents.js* Module
 
   The first step is to import the *mg-webComponents* module from the Web Server's root directory.
 
         import {webComponents} from '../../mg-webComponents.js';
 
 
-## Next, import the module that you created in the previous step which contained the definition of how you
-want to use your WebComponents.
+## 2) Import your Component Assembly Module
+
+Next, import the module that you created in the previous step which contained the definition of your WebComponent Assembly.
 
 
         import {define_step1} from './step1.js';
 
-## Make sure you wait until all the resources are loaded into the DOM
+## 3) Wait for the DOM to Fully Load
 
-Wrap all subsequent logic in the following wrapper:
+Make sure you wait until all the resources are loaded into the DOM.  Do this by wrapping all subsequent logic in the following event handler:
 
         document.addEventListener('DOMContentLoaded', function() {
           // ...etc
         });
 
-## Add your JSON component definition to *mg-webComponents* using the latter's *addComponent* method.
+## 4) Add Your WebComponent Assembly
+
+Add your WebComponent Assembly definition to *mg-webComponents* using the latter's *addComponent* method.
 
 The *addComponent()* method takes two arguments:
 
-- name: a name you specify for your JSON component.
+- name: a name you specify for your WebComponent Assembly.
 - the output from the exported function defined in the component definition module that you imported
 
 So in our example:
 
           webComponents.addComponent('step1', define_step1());
 
-We're calling the component *step1*, and it's defined by what is returned when *define_step1* is invoked.
+Here, we're calling the WebComponent Assembly *step1*, and it's defined by what is returned when *define_step1* is invoked.
 
-The added component assembly will now be accessible via *webComponents.component[name]*, ie in our case:
+The added WebComponent assembly will now be accessible via the reference *webComponents.component[name]*, ie in our case:
 
         webComponents.components.step1
 
 
-## Define a context object 
+## 5) Define a Context Object 
 
 This context object will be used by *mg-webComponents* to provide the context for various
-actions it takes.  In our simple example, the only context we need to provide where to 
+actions it takes.  In our simple example, the only context we need to provide is where to 
 physically find your library of WebComponents.
 
           let context = {
@@ -419,7 +476,7 @@ physically find your library of WebComponents.
           };
 
 
-## Optionally turn console logging on
+## 6) Optionally Turn Console Logging On
 
 During development, it's a good idea to turn on console logging, to see the progress of
 how your components are loaded and rendered.  Do this by turning *mg-webComponents* logging on:
@@ -427,9 +484,9 @@ how your components are loaded and rendered.  Do this by turning *mg-webComponen
           webComponents.setLog(true);
 
 
-## Loading your assembly of WebComponents
+## 9) Load and Render your WebComponent Assembly
 
-The final step is to tell *mg-webComponents* to load your component assembly by invoking its
+The final step is to tell *mg-webComponents* to load and render your component assembly by invoking its
 *loadGroup()* method.
 
 The *loadGroup()* method takes three arguments:
