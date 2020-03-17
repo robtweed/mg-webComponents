@@ -18,11 +18,6 @@ export function define_step8(webComponents) {
           div.setState({text: 'Button was clicked at ' + new Date().toLocaleString()});
         };
         this.addHandler(fn, this.rootElement);
-
-        setTimeout(function() {
-          _this.remove();
-        }, 10000);
-
       }
     }
   };

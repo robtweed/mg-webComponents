@@ -100,11 +100,52 @@ So, for example, if your web server root directory was /opt/nginx/www, you shoul
 
 You're now ready to begin the Tutorial
 
+# The *mg-webComponents* Layers
+
+*mg-webComponents is based around 4 layers, each of which adheres to a relatively small set of patterns,
+reserved propert names and reserved method names.
+
+
+          -------------------
+          | HTML Loader Page |
+          -------------------
+                   |
+           -------------------
+           | mg-webComponents |
+           |  Load/Render     |
+           |   ES6 Module     |
+            ------------------
+                   |
+          ---------------------
+         |   WebComponents     |
+         | Assembly Definition |
+         |    ES6 Module       |
+          ---------------------
+                  /|\
+          ---------------------
+         |   WebComponents     |
+         |   Module Library    |
+         |                     |
+          ---------------------
+
+The idea of *mg-webComponents* is to build a library of basic (and usually individually pretty simple)
+WebComponents that are used as re-usable buidling blocks that you assemble in whatever
+ways you require.  Your Assemblies are then passed into APIs provided by *mg-webComponents*
+which loads and renders them into the Web Page you load into your browser.
+
+
+Let's first go through these one by one, starting a the bottom layer and working our way up.
+
+
+
 # The WebComponents Pattern
 
+At the botton of the 4 layers is a collection of individual WebComponent files, either pre-built
+ones (such as the ones you'll find at */www/components/tutorial* and 
+*/www/components/adminui*), or ones you create yourself.
+
 *mg-webComponents* uses standard WebComponents.  However, it expects them to be defined and
-used according to a specific pattern.  Let's take a look at the first part of that pattern,
-specifically how you should define each of your WebComponents.
+used according to a specific pattern.  Let's take a look at that pattern.
 
 The */components/tutorial* folder that you created in the previous step contains some
 simple examples of WebComponents, created for use with *mg-webComponents*.
@@ -152,13 +193,13 @@ The basic pattern to always follow is shown in *tutorial-template.js*:
 
 Let's go through the important pieces of this pattern:
 
-## 1) Your WebComponents should export a function named *load*
+## 1) Your WebComponents should be defined as an ES6 Module
 
-
-Always wrap your WebComponents inside:
+This module MUST export a function named *load*, so you always wrap your WebComponents inside:
 
         export function load() {
         };
+
 
 ## 2) The first part of your WebComponent name is its namespace
 
@@ -180,12 +221,16 @@ WebComponent's class name.  So we'll use *tutorial_template* for our example abo
 
           customElements.define(componentName, class tutorial_template extends HTMLElement {
 
+
 ## 3) You Don't Need to use Shadow DOM
 
 In all the examples we're going to use, we **won't** be using the Shadow DOM capability of 
 WebComponents.  You *can* use the Shadow DOM with *mg-webComponents*, but it isn't essential,
 and, if using *mg-webComponents* with a framework such as [Bootstrap 4](https://getbootstrap.com/), 
 you'll find it all a lot simpler without Shadow DOM.
+
+Using Shadow DOM is an advanced topic, and examples of its use will be covered later in the tutorial.
+For now, its use is neither relevant nor helpful to understanding the *mg-webComponents* framework.
 
 
 ## 4) Define the HTML for your WebComponent
@@ -196,11 +241,12 @@ single &lt;div&gt; tag.
 
 Define the markup using the following pattern:
 
-      const html = `
-<div></div>
-      `;
+        const html = `
+          <div></div>
+        `;
 
-      this.html = `${html}`;
+        this.html = `${html}`;
+
 
 ## 5) Always add a method named *setState*
 
@@ -217,6 +263,7 @@ So, for example:
         this.name = state.name;
       }
     }
+
 
 ## 6) Always add the *connectedCallback* method
 
@@ -285,7 +332,10 @@ You should **ALWAYS** use this pattern:
 special functionality (see later).
 
 
-# Create your WebComponent
+# Create your WebComponent Module
+
+Pulling together everything described in the previous section, we can now
+construct a WebComponent module to use in our examples.
 
 Take a look at */components/tutorial-div-simple.js* which is based on the template
 described above.  
@@ -351,10 +401,10 @@ if you look carefully, you'll see that the only difference between this and the 
 # Define your WebComponent Assembly
 
 The next step is to define how you're going to use one or more of your WebComponents.  You do this
-by defining a JSON object that defines an assembly of one or more nested WebComponents.
+by defining a JSON object that defines an Assembly of one or more nested WebComponents.
 
-Take a look at your */js/step1.js* file for a very simple example which is just going to define an
-assembly that consists of a single (un-nested) instance of the *tutorial-div-simple* WebComponent
+Take a look at your */js/step1.js* file for a very simple example that is just going to define an
+Assembly consisting of a single (un-nested) instance of the *tutorial-div-simple* WebComponent
 that we described in the previous section:
 
 
@@ -373,7 +423,9 @@ that we described in the previous section:
 
 Note the following key parts of the pattern above:
 
-## 1) Your definition should export a uniquely-named function
+## 1) Your definition is an ES6 Module
+
+This module MUST export a uniquely-named function.  The name of the function is up to you.
 
 In our case we'll call that function *define_step1*.
 
@@ -382,9 +434,9 @@ In our case we'll call that function *define_step1*.
         };
 
 
-## 2) Define your assembly as a JSON Object named *component*
+## 2) Define your Assembly as a JSON Object named *component*
 
-This JSON object will define the assembly of WebComponent(s) you want to use, and apply state properties to it/them when loaded.
+This JSON object will define the Assembly of WebComponent(s) you want to use, and optionally apply state properties to it/them when loaded.
 
 In our simple example above, we're just using/loading a single WebComponent - our *tutorial-dev-simple*
 one, and then setting its *text* state property.  Doing so will cause the *tutorial-dev-simple*
@@ -437,6 +489,12 @@ Next, import the module that you created in the previous step which contained th
 
         import {define_step1} from './step1.js';
 
+
+The imported name must match the exported funtion name of your Assembly module, which, if you remember from above, was:
+
+        export function define_step1() {
+
+
 ## 3) Wait for the DOM to Fully Load
 
 Make sure you wait until all the resources are loaded into the DOM.  Do this by wrapping all subsequent logic in the following event handler:
@@ -445,7 +503,7 @@ Make sure you wait until all the resources are loaded into the DOM.  Do this by 
           // ...etc
         });
 
-## 4) Add Your WebComponent Assembly
+## 4) Add Your WebComponent Assembly to *mg-webComponents*
 
 Add your WebComponent Assembly definition to *mg-webComponents* using the latter's *addComponent* method.
 
@@ -509,7 +567,7 @@ So, in our example, we invoke:
 
 # Define the Web Page for your Components
 
-Now that everything else is prepared and built, you finaly need to create the base HTML file that you will
+Now that everything else is prepared and built, you finally need to create the base HTML file that you will
 load into your web server.  Take a look at the */tutorial/step1.html* file.  This shows the
 very simple pattern that you should always follow:
 
@@ -532,7 +590,7 @@ above:
 
 # Load the Web Page
 
-You're ready to run the test example.  Load the page into your browser, eg:
+You're now ready to run the test example.  Load the page into your browser, eg:
 
         http://localhost/tutorial/step1.html
 
@@ -1004,13 +1062,365 @@ Always adhere to the pattern above when specifying the *context* object, ie alwa
 
 So now try loading the corresponding HTML page for this example (*/www/tutorial/step5,html*)
 
-You should see a blank screen, and after 5 seconds, *Hello World* should appear against a cyan
+This time, you should see a blank screen, and after 5 seconds, *Hello World* should appear against a cyan
 background.
 
 
 
+# Using Multiple Hooks
+
+You can specify and apply hooks to any of the WebComponents that you define in an Assembly.
+
+Take a look at the
+ WebComponent Assembly module you'll find at */www/tutorial/js/step6.js*:
 
 
+        let component = {
+          componentName: 'tutorial-div',
+          state: {
+            attributes: {
+              style: 'background-color: cyan'
+            },
+            hidden: true
+          },
+          children: [
+            {
+              componentName: 'tutorial-div',
+              state: {
+                text: 'Hello World'
+              },
+              hooks: ['changeTextAfterDelay']
+            }
+          ],
+          hooks: ['showAfterDelay']
+        };
+
+
+So in this example, we're applying a different hook method to each of the *tutorial-div* WebComponents.
+
+- *showAfterDelay* will be applied to the outermost WebComponent
+- *changeTextAfterDelay* will be applied to the innermost WebComponent.
+
+These hooks are defined as before:
+
+        let hooks = {
+         'tutorial-div': {
+           showAfterDelay: function() {
+             let _this = this;
+             setTimeout(function() {
+               _this.show();
+             }, 5000);
+           },
+           changeTextAfterDelay: function() {
+             let _this = this;
+             setTimeout(function() {
+               _this.setState({
+                 text: 'This is very cool stuff!',
+                 attributes: {
+                   style: 'font-size: 24px'
+                 }
+               });
+             }, 8000);
+           }
+         }
+       };
+
+So it's important to recognise that whilst each hook method is referring to *this*, they will be
+dealing with different instances of the *tutorial-div* WebComponent.
+
+Notice also that the *changeTextAfterDelay()* hook method is invoking the *setState()* method for
+its corresponding WebComponent instance.  As you'll see, after a delay of 8 seconds, it will
+change the text content of the WebComponent's *div* tag, and also change its *style* attribute to
+a much larger font size.
+
+As before, the WebComponent Assembly module must return both the JSON *component* assembly object
+**and** the *hooks* object:
+
+  return {component, hooks};
+
+
+Try loading the HTML page for this example (*/www/tutorial/step6.html*) and see what happens this time.
+
+The *Hello World* message should appear after 5 seconds, and then, 3 seconds later, the message will
+change to *This is very cool stuff* in a much bigger font.
+
+
+# Defining Your WebComponent Assembly as XML
+
+## Why Use XML?
+
+You can probably already envisage that if you have a large, complex and deeply-nested WebComponent
+Assembly definition, then it will require a quite verbose JSON document to describe it.
+
+Whilst many people will find this is quite satisfactory, *mg-webComponents* provides an alternative
+way of describing your WebComponents Assembly: as a corresponding set of XML tags.
+
+## How to Define and Assembly as XML
+
+Take a look at the
+ WebComponent Assembly module you'll find at */www/tutorial/js/step7.js*.  This is essentially the
+same example as the previous one, but expressed using XML instead of JSON.  
+
+So we first define the XML.  Using the *back-tick* syntax makes this clean and easy to do: 
+
+        let config = `
+          <tutorial-div attributes.style="background-color: cyan" hook="hideAfterDelay">
+            <tutorial-div text="Hello World!" hook="changeTextAfterDelay" />
+          </tutorial-div>
+        `;
+
+When using this approach, the WebComponent names are expressed as corresponding tag names, eg:
+
+        <tutorial-div></tutorial-div>
+
+which is the equivalent of the JSON syntax:
+
+
+        componentName: 'tutorial-div'
+
+
+Any *state* properties are expressed as attributes.  If the *state* property
+is an object, then you can use *dot* notation in the attribute name, eg as here:
+
+        attributes.style="background-color: cyan"
+
+which is the equivalent of:
+
+        state: {
+          attributes: {
+            style: "background-color: cyan"
+          }
+        }
+
+Using this XML notation you can define a single hook using the *hook* attribute, eg:
+
+        hook="hideAfterDelay"
+
+The *children* array is, of course, substituted by nesting the WebComponent XML tags.
+
+As you can see, this approach can be a lot less verbose and clearer to read than the JSON equivalent.
+
+
+However, since *mg-webComponents* only understands the JSON syntax, you must convert the
+XML syntax into the equivalent JSON syntax.  *mg-webComponents* provides a method called
+*parse* for doing this:
+
+        let component = webComponents.parse(`${config}`);
+
+
+## Parsing the XML Assembly Definition
+
+Now, in order to use this API, we need to pass the *webComponents* object to your
+Assembly module.  So we first need to change its function interface at the top of the module:
+
+        export function define_step7(webComponents) {
+
+So you can see that we're now passing the webComponents as the first argument of the exported
+function.
+
+Secondly, in your Load/Render module, you need to make the following change.
+(see */www/tutorial/app7.js*):
+
+        webComponents.addComponent('step7', define_step7(webComponents));
+
+So now your Assembly's *define_step7* function will be correctly passed the *webComponents* object,
+which, in turn, was instantiated by:
+
+        import {webComponents} from '../../mg-webComponents.js';
+
+
+## Completing the Example
+
+
+The hook methods in this example are only slightly modified from the previous example:
+
+        let hooks = {
+          'tutorial-div': {
+            hideAfterDelay: function() {
+              let _this = this;
+              setTimeout(function() {
+                _this.hide();
+              }, 5000);
+            },
+            changeTextAfterDelay: function() {
+              let _this = this;
+              let parent = this.getParentComponent('tutorial-div');
+              setTimeout(function() {
+                _this.setState({
+                  text: 'This is very cool stuff!',
+                  attributes: {
+                    style: 'font-size: 24px'
+                  }
+                });
+                parent.show();
+              }, 8000);
+            }
+          }
+        };
+
+See if you can spot the difference.
+
+## Running the Example
+
+Try loading the corresponding HTML page (*/www/tutorial/step7.html*) to see this example
+in action.
+
+
+
+# Using Hooks to Define Event Handlers
+
+## Background
+
+So far, the examples of *hooks* have been of a pretty trivial nature.  One of the
+more likely purposes you'll use for *hooks* is to define dynamic Event Handlers for your
+WebComponents.
+
+It's fairly common to define Event Handlers, eg how to handle a button click, within the
+WebComponent definition itself, you will find that there will be circumstances where such a statically-defined
+handler is what you need, and instead you'll need one whose behaviour is determined at run-time, eg
+to fetch data from a database and do something with that data.
+
+So, for example, you could define a general-purpose *button* WebComponent, whose *click* handler
+is defined as a *hook* method and is therefore context-dependent rather than statically-defined.
+
+## An Example Using a Button WebComponent
+
+Take a look at the
+ WebComponent Assembly module you'll find at */www/tutorial/js/step8.js*.
+
+This uses the XML syntax described above to define the WebComponent Assembly:
+
+        let config = `
+          <tutorial-div>
+            <tutorial-button text="Try me out" hook="buttonClick" />
+            <tutorial-div name="display" />
+          </tutorial-div>
+        `;
+
+This time we're using two instances of the *tutorial-div* WebComponent, but we're also
+using a new WebComponent named *tutorial-button*.  
+
+## The Button WebComponent
+
+Let's take a look at its definition 
+(see */www/components/tutorial/tutorial-button.js*).
+
+This follows the usual pattern, but this time its HTML is a &lt;button&gt; tag:
+
+        const html = `
+          <button>Default Text</button>
+        `;
+
+        this.html = `${html}`;
+
+Its *setState* method is pretty much identical to the one we defined for the
+*tutorial-div* WebComponent, and it also has a show and hide method defined.
+
+The *connectedCallback()* method sets the *rootElement* property to the &lt;button&gt; tag.
+
+      this.rootElement = this.getElementsByTagName('button')[0];
+
+but otherwise everything else in this WebComponent definition should look familiar.
+
+## Defining the Button's Handler in the Hook Method
+
+So now let's look at the hook that is to be applied to this button in our WebComponents
+Assembly definition:
+
+  let hooks = {
+    'tutorial-button': {
+      buttonClick: function() {
+        let _this = this;
+        let fn = function() {
+          let div = _this.getComponentByName('tutorial-div', 'display');
+          div.setState({text: 'Button was clicked at ' + new Date().toLocaleString()});
+        };
+        this.addHandler(fn, this.rootElement);
+
+      }
+    }
+  };
+
+Always use the pattern shown above when creating handlers:
+
+- create a function which defines the actual handler method.  In our case:
+
+        let fn = function() {
+          let div = _this.getComponentByName('tutorial-div', 'display');
+          div.setState({text: 'Button was clicked at ' + new Date().toLocaleString()});
+        };
+
+- use *this.addHandler()* to create the actual Event Handler.
+
+        this.addHandler(fn, this.rootElement);
+
+The arguments for this method are:
+
+- fn: the Event Handler function to trigger
+- target element: the element to which the Event Handler will be added (default is *this.rootElement*)
+- the type of event that triggers the handler (default is 'click')
+
+So, in our example above, we could have simply specified:
+
+        this.addHandler(fn);
+
+
+## Why Use *this.addHandler()*?
+
+
+Why should you use this method instead of an explicit call to:
+
+        this.rootElement.addEventListener('click', fn);
+
+The answer is that by using *this.addHandler()*, *mg_webComponents* registers this handler and will
+automatically remove it if the WebComponent instance is removed from the DOM.  This ensures you won't
+suffer from any memory leaks.
+
+
+## Accessing the Methods of Another WebComponent
+
+Let's take a further look at the Event Handler function we've specified:
+
+        let fn = function() {
+          let div = _this.getComponentByName('tutorial-div', 'display');
+          div.setState({text: 'Button was clicked at ' + new Date().toLocaleString()});
+        };
+
+This is using a method (*getComponentByName*) that *mg-webComponents* automatically 
+adds to your WebComponents when they are loaded.  This method allows you to locate any of your
+WebComponents within the DOM.  It requires two arguments:
+
+- The name of the WebComponent you want to find: in our case *tutorial-div*
+- the name property of the specific instance of the WebComponent you want to find.
+
+Remember when we looked at the recommended template structure for your WebComponents, it provided a 
+state property for defining a name for the WebComponent instance?  Now you can see how and when it
+comes into play.
+
+So if you look at the Assembly XML definition, you'll see this:
+
+            <tutorial-div name="display" />
+
+So the Event Handler is locating this WebComponent instance using:
+
+          let div = _this.getComponentByName('tutorial-div', 'display');
+
+Having located it, it can now set this WebComponent's text content using its *setState()* method:
+
+          div.setState({text: 'Button was clicked at ' + new Date().toLocaleString()});
+
+So you can see in this example how you can access and use the methods and properties of any
+WebComponent within the DOM of your application.
+
+## Run the Example
+
+OK, let's try this example out by loading its HTML Page (*/www/tutorial/step8.html*),
+
+You'll see the button appear.  Every time you click it, text should appear in the *div* tag
+beneath it, updating the date/time it was clicked.
+
+Spend some time studying the example code above to see why this is happening.  Hopefully it should
+be fairly self-explanatory now.
 
 
 
