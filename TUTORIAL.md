@@ -1201,14 +1201,15 @@ The *children* array is, of course, substituted by nesting the WebComponent XML 
 As you can see, this approach can be a lot less verbose and clearer to read than the JSON equivalent.
 
 
+## Parsing the XML Assembly Definition
+
+
 However, since *mg-webComponents* only understands the JSON syntax, you must convert the
 XML syntax into the equivalent JSON syntax.  *mg-webComponents* provides a method called
 *parse* for doing this:
 
         let component = webComponents.parse(`${config}`);
 
-
-## Parsing the XML Assembly Definition
 
 Now, in order to use this API, we need to pass the *webComponents* object to your
 Assembly module.  So we first need to change its function interface at the top of the module:
@@ -1275,10 +1276,10 @@ So far, the examples of *hooks* have been of a pretty trivial nature.  One of th
 more likely purposes you'll use for *hooks* is to define dynamic Event Handlers for your
 WebComponents.
 
-It's fairly common to define Event Handlers, eg how to handle a button click, within the
+Although it's fairly common to define Event Handlers, eg how to handle a button click, within the
 WebComponent definition itself, you will find that there will be circumstances where such a statically-defined
-handler is what you need, and instead you'll need one whose behaviour is determined at run-time, eg
-to fetch data from a database and do something with that data.
+handler is insufficient for what you need, and instead you'll need one whose behaviour is determined at run-time, eg
+to fetch data from a database and do something based on the characteristics of that data.
 
 So, for example, you could define a general-purpose *button* WebComponent, whose *click* handler
 is defined as a *hook* method and is therefore context-dependent rather than statically-defined.
@@ -1327,19 +1328,18 @@ but otherwise everything else in this WebComponent definition should look famili
 So now let's look at the hook that is to be applied to this button in our WebComponents
 Assembly definition:
 
-  let hooks = {
-    'tutorial-button': {
-      buttonClick: function() {
-        let _this = this;
-        let fn = function() {
-          let div = _this.getComponentByName('tutorial-div', 'display');
-          div.setState({text: 'Button was clicked at ' + new Date().toLocaleString()});
+        let hooks = {
+          'tutorial-button': {
+            buttonClick: function() {
+              let _this = this;
+              let fn = function() {
+                let div = _this.getComponentByName('tutorial-div', 'display');
+                div.setState({text: 'Button was clicked at ' + new Date().toLocaleString()});
+              };
+              this.addHandler(fn, this.rootElement);
+            }
+          }
         };
-        this.addHandler(fn, this.rootElement);
-
-      }
-    }
-  };
 
 Always use the pattern shown above when creating handlers:
 
@@ -1357,7 +1357,7 @@ Always use the pattern shown above when creating handlers:
 The arguments for this method are:
 
 - fn: the Event Handler function to trigger
-- target element: the element to which the Event Handler will be added (default is *this.rootElement*)
+- target element: the element within the WebComponent to which the Event Handler will be added (default is *this.rootElement*)
 - the type of event that triggers the handler (default is 'click')
 
 So, in our example above, we could have simply specified:
