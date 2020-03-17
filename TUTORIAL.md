@@ -628,17 +628,17 @@ what it contains:
           return {component};
         };
 
-This extends the first example by nesting two instances of the *&lt;tutorial-div-simple&gt; 
+This extends the first example by nesting two instances of the *tutorial-div-simple* 
 Webcomponent.  This is done using the *children* property which you use to define an array
 of WebComponents that you want to nest within the parent WebComponent.
 
 You'll notice that we've chosen not to set any state values for the outermost 
-*&lt;tutorial-div-simple&gt; Webcomponent, but we *are* setting state for the innermost one.
+*tutorial-div-simple* Webcomponent, but we *are* setting state for the innermost one.
 
 If you use the *children* property within a WebComponent Assembly definition, *mg-webComponents*
 will expect to find *this.childrenTarget* defined in the WebComponent to which you're applying
 the *children property.  If you look back through this tutorial above, you'll see that we did this
-for the *&lt;tutorial-div-simple&gt; Webcomponent.
+for the *tutorial-div-simple* Webcomponent.
 
 The file */www/tutorial/js/app2.js* defines how this WebComponent Assembly is to be loaded and rendered.
 In fact it's no different from the first example (*app1.js*), except it's now loading the file
@@ -687,8 +687,8 @@ has now nested the two &lt;div&gt; tags:
           </div>
         </tutorial-div-simple>
 
-Note that the actual *&lt;tutorial-div-simple&gt; WebComponent tags are completely benign as far as
-layout is concerned: by default WebComponent tags behave like *&lt;span&gt; tags, with a style
+Note that the actual *&lt;tutorial-div-simple&gt;* WebComponent tags are completely benign as far as
+layout is concerned: by default WebComponent tags behave like &lt;span&gt; tags, with a style
 of *display: inline*.
 
 
@@ -723,10 +723,10 @@ what it contains:
 
 There's two differences from the previous nested example:
 
-- we're now using a different WebComponent: *&lt;tutorial-div&gt;
-- we're applying state to each of the instances of the *&lt;tutorial-div&gt; WebComponent
+- we're now using a different WebComponent: *tutorial-div*
+- we're applying state to each of the instances of the *tutorial-div* WebComponent
 
-Let's take a look at this *&lt;tutorial-div&gt; WebComponent (you'll find a copy
+Let's take a look at this *tutorial-div* WebComponent (you'll find a copy
 at */www/components/tutorial/tutorial-div.js*):
 
 The key differences are:
@@ -748,7 +748,7 @@ specifically for this WebComponent:
         `;
         this.html = `${html}`;
 
-- the *setState()* method includes the ability to define attributes for the WebComponent's
+- the *setState()* method now includes the ability to define attributes for the WebComponent's
 main &lt;div&gt; tag, the ability to apply CSS classes to it, and to show or hide the
 WebComponent:
 
@@ -797,14 +797,14 @@ setting the *visible* and *hidden* states respectively:
 
 You can see from this that, having started with just a very simple &lt;div&gt; tag, this WebComponent
 is beginning to provide a lot of ways of accessing, controlling and modifying it, making it a
-very useful and powerful general-purpose way of defining and using &lt;div&gt; tags.  
+very useful and powerful general-purpose way of defining and using the humble &lt;div&gt; tag.  
 
 Note that it's entirely
 up to you what functionality you define for your WebComponents.  You can add as many methods of your
 own as you like, and make the *setState()* method as complex as you like.
 
 
-So let's return to the WebComponent Assembly module:
+So let's return to the WebComponent Assembly module we're using for this example:
 
         export function define_step3() {
         
@@ -829,8 +829,8 @@ So let's return to the WebComponent Assembly module:
         };
 
 You'll see that we're specifying both state and children properties to the outermost 
-*&lt;tutorial-div&gt; WebComponent, and applying different state to the innermost
-*&lt;tutorial-div&gt; WebComponent.
+*tutorial-div* WebComponent, and applying different state to the innermost
+*tutorial-div* WebComponent.
 
 The WebComponent loader module and HTML file for this example (*/www/tutorial/js/app3.js* and
 */www/tutorial/step3.html*) are the same as before.  This time when you load the HTML file,
@@ -887,8 +887,8 @@ see that the tags have been rendered, but of course the hidden CSS class has bee
 
 # Adding Dynamic Behaviour Using Hooks
 
-Whilst, within your WebComponent Assembly JSON definition, the *state* property allows 
-you to apply state to a WebComponent, you may want to do more than that and invoke some
+Although, within your WebComponent Assembly JSON definition, the *state* property allows 
+you to apply state to a WebComponent, there may be times when you want to do more than that and invoke some
 more extensive logic.
 
 Take the previous example where the display was hidden when rendered.  Let's imagine we then want
@@ -937,7 +937,7 @@ Take a look at the
         };
 
 
-Notice the *hooks* property that is being applied to the outermost *&lt;tutorial-div&gt; WebComponent:
+Notice the *hooks* property that is being applied to the outermost *tutorial-div* WebComponent:
 
 
             hooks: ['showAfterDelay']
@@ -981,13 +981,13 @@ after any state values have been applied.
 
 
 If you specify any hooks in your WebComponent Assembly module, you must return them within the
-module's funtion along with the WebComponet Assembly JSON document:
+module's funtion along with the WebComponent Assembly JSON document:
 
 
           return {component, hooks};
 
 
-Take a look at the corresponding WebComponent Loader/Render module for this example 
+Importantly, take a look at the corresponding WebComponent Loader/Render module for this example 
 (see */www/tutorial/js/app5.js*).  You'll see that, in order to use hooks, we also need
 to extend the *content* object to support them:
 
@@ -997,12 +997,12 @@ to extend the *content* object to support them:
           hooks: webComponents.hooks
         };
 
-Always adhere to the pattern above, ie:
+Always adhere to the pattern above when specifying the *context* object, ie always add exactly this:
 
           hooks: webComponents.hooks
 
 
-Try loading the corresponding HTML page for this example (*/www/tutorial/step5,html*)
+So now try loading the corresponding HTML page for this example (*/www/tutorial/step5,html*)
 
 You should see a blank screen, and after 5 seconds, *Hello World* should appear against a cyan
 background.
