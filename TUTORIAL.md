@@ -606,7 +606,406 @@ In the next part of the Tutorial we'll build on this simple example, and hopeful
 of this WebComponent approach will begin to become clear.
 
 
+# Nesting WebComponents
 
+Take a look at the WebComponent Assembly module you'll find at */www/tutorial/js/step2.js*.  Here's
+what it contains:
+
+        export function define_step2() {
+        
+          let component = {
+            componentName: 'tutorial-div-simple',
+            children: [
+              {
+                componentName: 'tutorial-div-simple',
+                state: {
+                  text: 'Hello World'
+                }
+              }
+            ]
+          };
+        
+          return {component};
+        };
+
+This extends the first example by nesting two instances of the *&lt;tutorial-div-simple&gt; 
+Webcomponent.  This is done using the *children* property which you use to define an array
+of WebComponents that you want to nest within the parent WebComponent.
+
+You'll notice that we've chosen not to set any state values for the outermost 
+*&lt;tutorial-div-simple&gt; Webcomponent, but we *are* setting state for the innermost one.
+
+If you use the *children* property within a WebComponent Assembly definition, *mg-webComponents*
+will expect to find *this.childrenTarget* defined in the WebComponent to which you're applying
+the *children property.  If you look back through this tutorial above, you'll see that we did this
+for the *&lt;tutorial-div-simple&gt; Webcomponent.
+
+The file */www/tutorial/js/app2.js* defines how this WebComponent Assembly is to be loaded and rendered.
+In fact it's no different from the first example (*app1.js*), except it's now loading the file
+shown above:
+
+        import {webComponents} from '../../mg-webComponents.js';
+        import {define_step2} from './step2.js';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+        
+          webComponents.addComponent('step2', define_step2());
+          let context = {
+            path: './components/tutorial/'
+          };
+          webComponents.setLog(true);
+          webComponents.loadGroup(webComponents.components.step2, document.getElementsByTagName('body')[0], context);
+        
+        });
+
+
+And finally, this is loaded into the browser using the HTML page defined in */www/tutorial/step2.html*
+which is the same as the first example (*step1.html*):
+
+        <!DOCTYPE html>
+        <html lang="en">
+        
+          <head>
+            <title>mg-WebComponents Tutorial Step 2</title>
+          </head>
+        
+          <body>
+            <script type="module" src="js/app2.js"></script>
+          </body>
+        </html>
+
+
+Try loading this page into your browser.  The result will appear identical to the first example, 
+but if you use the browser's JavaScript console to inspect the elements, you'll find that it
+has now nested the two &lt;div&gt; tags:
+
+        <tutorial-div-simple>
+          <div>
+            <tutorial-div-simple>
+              <div>Hello World</div>
+            </tutorial-div-simple>
+          </div>
+        </tutorial-div-simple>
+
+Note that the actual *&lt;tutorial-div-simple&gt; WebComponent tags are completely benign as far as
+layout is concerned: by default WebComponent tags behave like *&lt;span&gt; tags, with a style
+of *display: inline*.
+
+
+
+# Applying State To Multiple WebComponents
+
+Take a look at the WebComponent Assembly module you'll find at */www/tutorial/js/step3.js*.  Here's
+what it contains:
+
+        export function define_step3() {
+        
+          let component = {
+            componentName: 'tutorial-div',
+            state: {
+              attributes: {
+                style: 'background-color: cyan'
+              }
+            },
+            children: [
+              {
+                componentName: 'tutorial-div',
+                state: {
+                  text: 'Hello World'
+                }
+              }
+            ]
+          };
+        
+          return {component};
+        };
+
+
+There's two differences from the previous nested example:
+
+- we're now using a different WebComponent: *&lt;tutorial-div&gt;
+- we're applying state to each of the instances of the *&lt;tutorial-div&gt; WebComponent
+
+Let's take a look at this *&lt;tutorial-div&gt; WebComponent (you'll find a copy
+at */www/components/tutorial/tutorial-div.js*):
+
+The key differences are:
+
+- the HTML includes a &lt;style&gt; tag that defines some CSS styles.  These will be available
+specifically for this WebComponent:
+
+
+        const html = `
+          <style>
+            .visible {
+              display: inline;
+            }
+            .hidden {
+              display: none;
+            }
+          </style>
+          <div></div>
+        `;
+        this.html = `${html}`;
+
+- the *setState()* method includes the ability to define attributes for the WebComponent's
+main &lt;div&gt; tag, the ability to apply CSS classes to it, and to show or hide the
+WebComponent:
+
+
+        setState(state) {
+          if (state.name) {
+            this.name = state.name;
+          }
+          if (state.cls) {
+            let _this = this;
+            state.cls.split(' ').forEach(function(cls) {
+              _this.rootElement.classList.add(cls);
+            });
+          }
+          if (state.text) {
+            this.rootElement.textContent = state.text;
+          }
+          if (state.attributes) {
+            for (let name in state.attributes) {
+              this.rootElement.setAttribute(name, state.attributes[name]);
+            }
+          }
+          if (state.hidden) {
+            this.classList.remove('visible');
+            this.classList.add('hidden');
+          }
+          if (state.visible) {
+            this.classList.add('visible');
+            this.classList.remove('hidden');
+          }
+        }
+
+  Note the way some of these are being applied to the WebComponent's &lt;div&gt; tag (via *this.rootElement*),
+whilst others are applied to the top-level WebComponent (via *this*).
+
+- two methods - *show()* and *hide()* are also defined.  These provide an alternative means of
+setting the *visible* and *hidden* states respectively:
+
+        show() {
+          this.setState({visible: true});
+        }
+        
+        hide() {
+          this.setState({hidden: true});
+        }
+
+You can see from this that, having started with just a very simple &lt;div&gt; tag, this WebComponent
+is beginning to provide a lot of ways of accessing, controlling and modifying it, making it a
+very useful and powerful general-purpose way of defining and using &lt;div&gt; tags.  
+
+Note that it's entirely
+up to you what functionality you define for your WebComponents.  You can add as many methods of your
+own as you like, and make the *setState()* method as complex as you like.
+
+
+So let's return to the WebComponent Assembly module:
+
+        export function define_step3() {
+        
+          let component = {
+            componentName: 'tutorial-div',
+            state: {
+              attributes: {
+                style: 'background-color: cyan'
+              }
+            },
+            children: [
+              {
+                componentName: 'tutorial-div',
+                state: {
+                  text: 'Hello World'
+                }
+              }
+            ]
+          };
+        
+          return {component};
+        };
+
+You'll see that we're specifying both state and children properties to the outermost 
+*&lt;tutorial-div&gt; WebComponent, and applying different state to the innermost
+*&lt;tutorial-div&gt; WebComponent.
+
+The WebComponent loader module and HTML file for this example (*/www/tutorial/js/app3.js* and
+*/www/tutorial/step3.html*) are the same as before.  This time when you load the HTML file,
+you should see the text *Hello World* appearing against a cyan-coloured background.
+
+If you look at the elements view in the browser's JavaScript console, you should now see:
+
+        <tutorial-div>
+          <div style="background-color: cyan">
+            <tutorial-div>
+              <div>Hello World</div>
+            </tutorial-div>
+          </div>
+        </tutorial-div></body>
+
+Note that for clarity, I've removed the &lt;style&gt; tags that will also be shown in this view.
+
+Something to note is that the *state* properties defined in your WebComponent Assembly
+module JSON definition are applied after the respective WebComponent has been
+appended to the DOM, actually immediately after the WebComponent's *connectedCallback()*
+method has been invoked.
+
+Also it's important to note that if you specify more than one WebComponent within a
+*children* array, the child WebComponents are appended to the parent WebComponent in
+strict sequence, as defined by each WebComponent's position in the array.
+
+
+Of course, you can apply as many state properties as you like. Take a look at the
+ WebComponent Assembly module you'll find at */www/tutorial/js/step4.js*.  You'll
+see that it applies not only an *attributes* *states* property, but also the *hidden states*
+property:
+
+        componentName: 'tutorial-div',
+        state: {
+          attributes: {
+            style: 'background-color: cyan'
+          },
+          hidden: true
+        },
+
+
+So when you load its HTML file (*/www/tutorial/step4.html*), you'll find that nothing is
+displayed, though, when you inspect the elements in the browser's JavaScript console, you'll
+see that the tags have been rendered, but of course the hidden CSS class has been applied:
+
+        <tutorial-div class="hidden">
+          <div style="background-color: cyan">
+            <tutorial-div>
+              <div>Hello World</div>
+            </tutorial-div>
+          </div>
+        </tutorial-div>
+
+
+# Adding Dynamic Behaviour Using Hooks
+
+Whilst, within your WebComponent Assembly JSON definition, the *state* property allows 
+you to apply state to a WebComponent, you may want to do more than that and invoke some
+more extensive logic.
+
+Take the previous example where the display was hidden when rendered.  Let's imagine we then want
+to make it appear after 5 seconds.
+
+To do that, we can define a method that is added to the WebComponent instance as a *hook*.  What you
+do in that hook is up to you, and quite independent of the WebComponent's definition itself, though,
+of course, it will almost certainly make use of the WebComponent's available properties and methods.
+
+Take a look at the
+ WebComponent Assembly module you'll find at */www/tutorial/js/step5.js*:
+
+        export function define_step5() {
+        
+          let component = {
+            componentName: 'tutorial-div',
+            state: {
+              attributes: {
+                style: 'background-color: cyan'
+              },
+              hidden: true
+            },
+            children: [
+              {
+                componentName: 'tutorial-div',
+                state: {
+                  text: 'Hello World'
+                }
+              }
+            ],
+            hooks: ['showAfterDelay']
+          };
+
+          let hooks = {
+            'tutorial-div': {
+              showAfterDelay: function() {
+                let _this = this;
+                setTimeout(function() {
+                  _this.show();
+                }, 5000);
+              }
+            }
+          };
+
+          return {component, hooks};
+        };
+
+
+Notice the *hooks* property that is being applied to the outermost *&lt;tutorial-div&gt; WebComponent:
+
+
+            hooks: ['showAfterDelay']
+
+This property defines an array of hook methods that you want to apply to the respective WebComponent.
+Typically you'll only specify a single method, but you can specify as many as you like.
+
+Each hook method name is up to you to define.  In the example above we're specifying that a single
+hook method named *showAfterDelay()* is to be applied.
+
+Your hook methods are normally defined within your WebComponent Assembly module, so you can easily
+see the source code for the hooks being applied to your WebComponent Assembly.
+
+You'll see this defined in our example:
+
+          let hooks = {
+            'tutorial-div': {
+              showAfterDelay: function() {
+                let _this = this;
+                setTimeout(function() {
+                  _this.show();
+                }, 5000);
+              }
+            }
+          };
+
+You define your hook methods as an object named *hooks*, the first level of which defines the
+WebComponent to which the hook method will apply (in this case the *tutorial-div* WebComponent),
+and the second level of which defines the specific named hook method.
+
+So you can see that in our simple example above, the *showAfterDelay* hook method will start a
+*setTimeout* function which, after 5 seconds, will invoke the WebComponent's *show()* method.
+
+Notice that the *this* context for a hook method is the instance of the WebComponent to which it applies.
+
+Hence. the *show()* method will be invoked for only the outermost instance of the 
+*tutorial-div* WebComponent.
+
+Note that hook methods are invoked after the respective WebComponent has been attached to the DOM, and
+after any state values have been applied.
+
+
+If you specify any hooks in your WebComponent Assembly module, you must return them within the
+module's funtion along with the WebComponet Assembly JSON document:
+
+
+          return {component, hooks};
+
+
+Take a look at the corresponding WebComponent Loader/Render module for this example 
+(see */www/tutorial/js/app5.js*).  You'll see that, in order to use hooks, we also need
+to extend the *content* object to support them:
+
+        let context = {
+          path: './components/tutorial/',
+          // ** add support for hooks
+          hooks: webComponents.hooks
+        };
+
+Always adhere to the pattern above, ie:
+
+          hooks: webComponents.hooks
+
+
+Try loading the corresponding HTML page for this example (*/www/tutorial/step5,html*)
+
+You should see a blank screen, and after 5 seconds, *Hello World* should appear against a cyan
+background.
 
 
 
