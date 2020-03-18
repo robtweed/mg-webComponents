@@ -280,11 +280,11 @@ let webComponents = {
             element.onLoaded();
           }
           // invoke any hooks
-          if (config.hooks && context.hooks) {
+          if (config.hooks && _this.hooks) {
             config.hooks.forEach(function(hook) {
-              if (context.hooks[config.componentName] && context.hooks[config.componentName][hook]) {
+              if (_this.hooks[config.componentName] && _this.hooks[config.componentName][hook]) {
                 try {
-                  context.hooks[config.componentName][hook].call(element, config.state);
+                  _this.hooks[config.componentName][hook].call(element, config.state);
                 }
                 catch(err) {
                   if (log) {
