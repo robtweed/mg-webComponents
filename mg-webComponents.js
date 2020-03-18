@@ -269,6 +269,8 @@ let webComponents = {
           element.addMetaTag = _this.addMetaTag;
           element.loadJSFile = _this.loadJSFile;
           element.loadCSSFile = _this.loadCSSFile;
+          element.loadGroup = _this.loadGroup.bind(_this);
+          element.getInstanceFromRegistry = _this.getInstanceFromRegistry;
           element.methodsToRemove = [];
 
           if (config.state  && element.setState) {
