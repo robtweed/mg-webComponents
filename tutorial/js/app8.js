@@ -6,8 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
   webComponents.addComponent('step8', define_step8(webComponents));
 
   let context = {
-    path: './components/tutorial/',
-    hooks: webComponents.hooks
+    path: './components/tutorial/'
   };
 
   webComponents.setLog(true);

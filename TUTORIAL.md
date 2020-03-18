@@ -1045,22 +1045,7 @@ module's funtion along with the WebComponent Assembly JSON document:
           return {component, hooks};
 
 
-Importantly, take a look at the corresponding WebComponent Loader/Render module for this example 
-(see */www/tutorial/js/app5.js*).  You'll see that, in order to use hooks, we also need
-to extend the *content* object to support them:
-
-        let context = {
-          path: './components/tutorial/',
-          // ** add support for hooks
-          hooks: webComponents.hooks
-        };
-
-Always adhere to the pattern above when specifying the *context* object, ie always add exactly this:
-
-          hooks: webComponents.hooks
-
-
-So now try loading the corresponding HTML page for this example (*/www/tutorial/step5,html*)
+So now try loading the corresponding HTML page for this example (*/www/tutorial/step5.html*)
 
 This time, you should see a blank screen, and after 5 seconds, *Hello World* should appear against a cyan
 background.
