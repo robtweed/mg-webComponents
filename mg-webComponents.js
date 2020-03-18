@@ -24,7 +24,7 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 15 March 2020
+ 18 March 2020
 
  */
 
@@ -266,6 +266,9 @@ let webComponents = {
           element.remove = _this.remove.bind(element);
           element.getComponentByName = _this.getComponentByName.bind(_this); 
           element.addHandler = _this.addHandler.bind(element);
+          element.addMetaTag = _this.addMetaTag;
+          element.loadJSFile = _this.loadJSFile;
+          element.loadCSSFile = _this.loadCSSFile;
           element.methodsToRemove = [];
 
           if (config.state  && element.setState) {
@@ -298,6 +301,17 @@ let webComponents = {
       }
     }
     loadComponent(0);
+  },
+  loadWebComponent(componentName, targetElement, context, callback) {
+    let assembly = {
+      componentName: componentName,
+      hooks: ['loadedCallback']
+    };
+    if (!this.hooks[componentName]) this.hooks[componentName] = {};
+    this.hooks[componentName].loadedCallback = function() {
+      callback(this);
+    };
+    this.loadGroup(assembly, targetElement, context);
   },
   getParentComponent(options) {
     options = options || {};

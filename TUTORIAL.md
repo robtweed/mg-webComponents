@@ -1651,11 +1651,12 @@ by appending it to the specified target element.  This target element may be a s
 
 - getComponentByName(componentName, propertyName): This method is also available to you within your Load/Render module, for locating previously-loaded WebComponents.
 
-- load(webComponentName, targetElement, context, callback): This method allows you to load a single named WebComponent rather than an Assembly. Its callback function is fired when the WebComponent is rendered
+- loadWebComponent(webComponentName, targetElement, context, callback): This method allows you to load a single named WebComponent rather than an Assembly. Its callback function is fired when the WebComponent is rendered
 into the DOM.  The callback function passes the WebComponent instance as its argument, eg:
 
+        let body = document.getElementsByTagName('body')[0];
 
-        webComponents.load('adminui-root', body, context, function(root) {
+        webComponents.loadWebComponent('adminui-root', body, context, function(root) {
           // root is the instance of the adminui-root WebComponent,
           //  so, eg, to set its state:
           //    root.setState({name: 'foo'});
