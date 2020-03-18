@@ -140,7 +140,7 @@ Let's first go through these one by one, starting a the bottom layer and working
 
 # The WebComponents Pattern
 
-At the botton of the 4 layers is a collection of individual WebComponent files, either pre-built
+At the bottom of the 4 layers is a collection of individual WebComponent files, either pre-built
 ones (such as the ones you'll find at */www/components/tutorial* and 
 */www/components/adminui*), or ones you create yourself.
 
@@ -1423,11 +1423,243 @@ Spend some time studying the example code above to see why this is happening.  H
 be fairly self-explanatory now.
 
 
+# Methods Added to Your WebComponents by *mg_webComponents*
+
+## Background
+
+One of the interesting aspects of *mg_webComponents* is that it automatically augments your
+WebComponent instances when they are loaded into the DOM.  These useful methods are
+therefore available to all your WebComponents, and are particularly useful within the *Hook*
+methods that you apply to your WebComponents within your Assembly modules.
+
+## getComponentsByName
+
+You've already seen in the previous example how to locate a WebComponent in the DOM from within
+a WebComponent's *Hook* method:
+
+
+          let component = this.getComponentByName(componentName, nameProperty);
+
+See the previous example for details
+
+
+## getParentComponent
+
+Another useful method is *getParentComponent*, eg:
+
+          let parentComponent = this.getParentComponent(componentName);
+
+This method recursively searches up the DOM's parent nodes, starting from your current
+WebComponent, for the specified WebComponent.
+
+For example, let's say you have a form WebComponent, eg *tutorial-form*, and a 
+form field component, eg *tutorial-form-field*.
+
+Within your WebComponent Assembly module, you could add a *Hook* method 
+to a *tutorial-form-field* WebComponent that locates the parent *tutorial-form* WebComponent.
+
+eg let's say your Assembly definition was:
+
+        <tutorial-form>
+          <tutorial-form-field hook="getFormComponent" />
+        </tutorial-form>
+
+Then the *getFormComponent Hook* method might be:
+
+        let hooks = {
+          'tutorial-form-field': {
+            getFormComponent: function() {
+              let form = this.getParentComponent('tutorial-form');
+              // you can now use any of the form component's methods or properties
+            }
+          }
+        };
+
+Note that when using the method, the WebComponent you're looking for doesn't need to
+have had a name attribute assigned to it.
+
+If the specified WebComponent can't be found up the parent node chain in the DOM, the
+*getParentComponent* method will return *undefined*.
+
+
+## Adding Event Handlers to WebComponents
+
+We've already seen in a previous example how you can add Event Handlers to specific tags
+within a WebComponent:
+
+        this.addHandler(handlerFunction, targetElement, eventType);
+
+eg:
+
+        this.addHandler(fn, this.rootElement, 'click');
+
+If the *eventType* is not specified, 'click' is assumed.
+
+If the targetElement is not specified, *this.rootElement* is assumed.
 
 
 
+## Removing a WebComponent from the DOM
+
+You can instruct a WebComponent to remove itself from the DOM:
+
+        this.remove();
+
+In doing so, this method will recurse down through the DOM below the WebComponent defined
+by *this*, and remove any lower-level WebComponents in an orderly fashion.  In doing so, their
+*disconnectCallback()* methods are invoked and, in turn, any handlers etc that were added to them
+using *this.addHandler()* will be cleanly removed.
+
+The *disconnectCallback()* method of a WebComponent may, of course, also include other specific logic
+defined by the WebComponent's author.  However, as described at the start of this tutorial,
+you should always ensure that the
+*disconnectCallback()* method of every WebComponent you use contains, as a minimum:
 
 
+            disconnectedCallback() {
+              if (this.onUnload) this.onUnload();
+            }
+
+The main purpose of *this.onUnload()* is to remove added Event Handlers.
+
+
+## Registering Other Methods/Functions For Clean Unloading
+
+In addition to Event Handlers, there may be other things that you want to assign to a
+WebComponent that should be cleanly unloaded if the WebComponent is removed.
+
+A good example is a timer using *setInterval* that you might want to intantiate and set going
+when a particular WebComponent is loaded and rendered.
+
+In your WebComponent's *Hook* method you might, therefore do the following:
+
+
+        let hooks = {
+          'tutorial-example-component': {
+            startTimer: function() {
+              this.timer = setInterval(function() {
+                // do something
+              }, 30000);
+            }
+          }
+        };
+
+So this will set your timed function firing every 30 seconds.  However, if the WebComponent
+is removed from the DOM, either as a result of its *remove()* method being invoked, or one of
+its parent WebComponents being removed, then you will want that timer stopped and removed.
+
+The trick is to first define a function that will stop the timer:
+
+        let hooks = {
+          'tutorial-example-component': {
+            startTimer: function() {
+              let timer = setInterval(function() {
+                // do something
+              }, 30000);
+
+              // *** add function to stop the timer
+
+              let stopTimer = function() {
+                clearInterval(timer);
+              };
+
+              // ***
+
+            }
+          }
+        };
+
+Finally, you can register this *stopTimer* function as a method that should be unloaded if the
+WebComponent is removed from the DOM.  To do this, use the *registerUnloadMethod()* method, ie:
+
+        this.registerUnloadMethod(unloadFunction);
+
+So let's complete the example above:
+
+
+        let hooks = {
+          'tutorial-example-component': {
+            startTimer: function() {
+              let timer = setInterval(function() {
+                // do something
+              }, 30000);
+
+              let stopTimer = function() {
+                clearInterval(timer);
+              };
+              this.registerUnloadMethod(stopTimer);
+            }
+          }
+        };
+
+
+
+# Reserved Methods within WebComponents
+
+*mg_webComponents expects to find and be capable of invoking a couple of specifically-named
+methods within your WebComponents.
+
+You've already come across the main one of these in this tutorial:
+
+- setState()
+
+You can also, optionally, define a method named *onLoad()* within your WebComponents.
+This method will be automatically invoked by *mg_webComponents*:
+
+- after any state properties defined in the WebComponent Assembly are added for the WebComponent
+- but **before** any *hook* method is invoked
+
+What you do in an *onLoad()* method is up to you.  Simply define it within your WebComponent using:
+
+
+        onLoad() {
+          // your logic to be invoked when the WebComponent is loaded
+        }
+
+
+
+# Reserved Property Names within WebComponents
+
+*mg_webComponents expects to find and be capable of using some specifically-named
+properties within your WebComponents.  
+
+You've already come across them in this tutorial:
+
+- this.rootElement: this should be assigned to the outermost HTML tag in your WebComponent's markup
+
+- this.childrenTarget: this should be assigned to the HTML tag within which other WebComponents will be nested
+
+- this.name: a name property you can assign to a WebComponent instance.  The value should be unique across
+instances of the same WebComponent.  This property is used by the *getComponentsByName()* method.
+
+You are free to use any other property names for your own purposes.
+
+
+
+# Methods Available to your Load/Render Module
+
+*mg_webComponents provides a number of methods that are designed for use within your Load/Render Module. 
+
+You've already come across two of these in this tutorial:
+
+- addComponent(name, assemblyMethod): this invokes your WebComponent Assembly function and registers
+the result using your specified name
+
+- loadGroup(name, targetElement, context): this loads and renders your WebComponent assembly into the DOM
+by appending it to the specified target element.  This target element may be a standard DOM element 
+(eg the document's *body* tag), or another WebComponent (see the next method)
+
+- getComponentByName(componentName, propertyName): This method is also available to you within your Load/Render module, for locating previously-loaded WebComponents.
+
+- load(webComponentName, targetElement, context, callback): This method allows you to load a single named WebComponent rather than an Assembly. Its callback function is fired when the WebComponent is rendered
+into the DOM.  The callback function passes the WebComponent instance as its argument, eg:
+
+
+        webComponents.load('adminui-root', body, context, function(root) {
+          // root is the instance of the adminui-root WebComponent,
+          //  so, eg, to set its state:
+          //    root.setState({name: 'foo'});
+        });
 
 
 
