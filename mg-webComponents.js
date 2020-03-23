@@ -24,7 +24,7 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 18 March 2020
+ 23 March 2020
 
  */
 
@@ -170,7 +170,7 @@ let webComponents = {
   }, 
   load: async function(componentName, targetElement, context, callback) {
     let namespace = componentName.split('-')[0];
-    if (log) console.log('*** load ' + componentName);
+    //if (log) console.log('*** load ' + componentName);
     let _this = this;
     if (context && !callback && typeof context === 'function') {
       callback = context;
@@ -202,7 +202,7 @@ let webComponents = {
 
     let elementClass = customElements.get(componentName);
     if (elementClass) {
-      if (log) console.log('** component ' + componentName + ' already loaded');
+      //if (log) console.log('** component ' + componentName + ' already loaded');
       invokeComponent(elementClass, callback);
     }
     else {
@@ -212,10 +212,10 @@ let webComponents = {
       if (!elementClass) {
         _module.load();
         elementClass = customElements.get(componentName);
-        if (log) console.log('** component ' + componentName + ' had to be loaded');
+        //if (log) console.log('** component ' + componentName + ' had to be loaded');
       }
       else {
-        if (log) console.log('** component ' + componentName + ' loaded by another loop');
+        //if (log) console.log('** component ' + componentName + ' loaded by another loop');
       }
 
       if (targetElement) {
@@ -227,7 +227,7 @@ let webComponents = {
       }
     }
   },
-  loadGroup: async function(configArr, targetElement, context, topComponent) {
+  loadGroup: async function(configArr, targetElement, context, callback) {
 
     // The array of components share the same target and must be appended
     // in strict sequence, so this is enforced by this logic..
@@ -241,7 +241,10 @@ let webComponents = {
     let noOfComponents = configArr.length;
 
     function loadComponent(no) {
-      if (no === noOfComponents) return;
+      if (no === noOfComponents) {
+        if (callback) callback();
+        return;
+      }
       let config = Object.assign({}, configArr[no]);
       let targetEl = targetElement;
       // optional target override
@@ -255,11 +258,10 @@ let webComponents = {
 
         _this.load(config.componentName, targetEl, context, function(element) {
           if (log) {
-            console.log('load element:');
-            console.log(element);
-            console.log(targetElement);
+            console.log('load element: ' + config.componentName);
+            //console.log(element);
+            //console.log(targetElement);
           }
-          if (topComponent) element.topComponent = topComponent;
           element.getParentComponent = _this.getParentComponent.bind(element);
           element.onUnload = _this.onUnload.bind(element);
           element.registerUnloadMethod = _this.registerUnloadMethod.bind(element);
@@ -296,9 +298,13 @@ let webComponents = {
             });
           }
           if (config.children && element.childrenTarget) {
-            _this.loadGroup(config.children, element.childrenTarget, context, topComponent || element);
+            _this.loadGroup(config.children, element.childrenTarget, context, function() {
+               loadComponent(no + 1);
+            });
           }
-          loadComponent(no + 1);
+          else {
+            loadComponent(no + 1);
+          }
         });
       }
     }
@@ -366,8 +372,8 @@ let webComponents = {
   },
   onUnload: function() {
     if (log) {
-      console.log('onUnload');
-      console.log(this);
+      //console.log('onUnload ' + this.componentName);
+      //console.log(this);
     }
     if (this.listeners) {
       this.listeners.forEach(function(listener) {
