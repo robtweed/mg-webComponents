@@ -8,62 +8,57 @@ Twitter: @rtweed
 Google Group for discussions, support, advice etc: [http://groups.google.co.uk/group/enterprise-web-developer-community](http://groups.google.co.uk/group/enterprise-web-developer-community)
 
 
-# About this Repository
+# About *mg-webComponents
 
-This repository contains an ES6 Module that creates the environment for
-dynamically creating structures in the browser using hierarchies and sets of
-WebComponents
+mg-webComponents is a module that allows you to build web applications 
+from hierarchical assemblies of WebComponents.
 
-# Using this Module
+mg-webComponents is designed to be completely dynamic, avoiding the need for 
+bundling or pre-compiling. As per the true spirit of the web architecture, 
+everything is fetched from the web server dynamically as and when needed.
 
-Create an index.html page:
+mg-webComponents makes use of the built-in capabilities of modern browsers, 
+and therefore requires no other framework in order to work. It is a very 
+lightweight and high-performance solution to web application development,
+ and is based on a deliberately very small but powerful set of patterns which allow you 
+to quickly and simply build applications of any degree of complexity.
 
-        <!DOCTYPE html>
-        <html lang="en">
-          <head>
-            <title>bsAdmin2 WebComponent Version</title>
-          </head>
-          <body>
-            <script type="module" src="js/wc-demo.js"></script>
-          </body>
-        </html>
-
-Then create your JavaScript module (ie *js/wc-demo.js* in the example above):
+Note that this Module requires a browser with support for ES6 Modules and
+WebComponents.  It has been tested with the latest versions of Chrome, Firefox and
+Safari (desktop and iOS versions).
 
 
-        import {webComponents} from '../../mg-webComponents.js';
+# Back-End Compatibility
 
-        document.addEventListener('DOMContentLoaded', function() {
-          webComponents.setLog(true);
+*mg-webComponents has no other dependencies, and can be used with any back-end
+platform technology or stack.  Your WebComponents can communicate and interact via any
+standard means, eg REST, Ajax, WebSockets.
 
-          let options = {
-            // specify the location of your WebComponents
-            path: './demo/js/'
-          };
-          // here I'm kicking things off by loading a root component into which I'll
-          //  subsequently attach my other components
-
-          let body = document.getElementsByTagName('body')[0];
-          webComponents.load('component-root', body, options, function(rootElement) {
-            // then I might want to add a group of components (defined as an array - *sidebarConfigArray*) 
-            // to this root structure
-
-            webComponents.loadGroup(sidebarConfigArray, root.sidebarTarget, options);
-          });
-        });
+However, *mg-webComponents works particularly well with the [QEWD](https://github.com/robtweed/qewd)
+framework and its integrated [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb) multi-model database.
 
 
-# Methods
+# Getting Started
 
-- setLog(status): (true | false) Turns console logging on and off
-- register(componentName, configurationArray): adds a configuration array to the registry, allowing you to fetch it by a name
-- getFromRegister(componentName): returns the named configuration array
-- load(componentConfigurationObject, targetElement, options): loads a single WebComponent and sets its state as defined in the configuration object
-- loadGroup(componentConfigurationArray, targetElement, opttions, callback): loads an array of WebComponents and appends them to a target element in sequence
+All the information you need to get started is in [the Tutorial document](./TUTORIAL.md).
 
-- loadJSFile(srcUrl): dynamically loads a JavaScript file
-- loadCSSFile(srcUrl): dynamically loads a CSS file
-- addMetaTag(attributes): dynamically creates and adds a meta tag to the document head
+Read [this tutorial](./QEWD.md) to learn how to use *mg-webComponents* with QEWD.
+
+
+# Existing *mg-webComponent* Module Libraries
+
+Rather than building your own *mg-webComponent* Modules, you can make use of an extensive
+library of pre-built WebComponent Modules that have been built around the Bootstrap 4-based
+[SB Admin 2 Theme](https://startbootstrap.com/themes/sb-admin-2/).
+
+See the [wc-adminui Github repository](https://github.com/robtweed/wc-admin-ui).
+
+This webComponent Module library allows you to build powerful SB Admin 2-themed web applications
+extremely quickly.  Its repository's README file provides a comprehensive tutorial on its use.
+
+Alternatively, use this library of WebComponent Modules as a useful set of examples to guide
+the development of your own ones.
+
 
 
 ## License
