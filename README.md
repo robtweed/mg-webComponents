@@ -30,11 +30,11 @@ Safari (desktop and iOS versions).
 
 # Back-End Compatibility
 
-*mg-webComponents has no other dependencies, and can be used with any back-end
+*mg-webComponents* has no other dependencies, and can be used with any back-end
 platform technology or stack.  Your WebComponents can communicate and interact via any
 standard means, eg REST, Ajax, WebSockets.
 
-However, *mg-webComponents works particularly well with the [QEWD](https://github.com/robtweed/qewd)
+However, *mg-webComponents* works particularly well with the [QEWD](https://github.com/robtweed/qewd)
 framework and its integrated [QEWD-JSdb](https://github.com/robtweed/qewd-jsdb) multi-model database.
 
 

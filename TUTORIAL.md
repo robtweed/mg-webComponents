@@ -102,7 +102,7 @@ You're now ready to begin the Tutorial
 
 # The *mg-webComponents* Layers
 
-*mg-webComponents is based around 4 layers, each of which adheres to a relatively small set of patterns,
+*mg-webComponent*s is based around 4 layers, each of which adheres to a relatively small set of patterns,
 reserved propert names and reserved method names.
 
 
@@ -263,6 +263,13 @@ So, for example:
         this.name = state.name;
       }
     }
+
+What state properties should be made available for each WebComponent will vary from WebComponent to WebComponent,
+depending on what the markup within them does and the degree of control you require over the
+behaviour and appearance of the WebComponent.  You are
+likely to find that as you begin to develop applications using WebComponents that you've created, you'll need
+to add more and more state properties.  So initially start with the most obvious ones you're likely to need,
+and add new ones as necessary later.
 
 
 ## 6) Always add the *connectedCallback* method
@@ -1588,16 +1595,16 @@ You've already come across the main one of these in this tutorial:
 
 - setState()
 
-You can also, optionally, define a method named *onLoad()* within your WebComponents.
+You can also, optionally, define a method named *onLoaded()* within your WebComponents.
 This method will be automatically invoked by *mg_webComponents*:
 
 - after any state properties defined in the WebComponent Assembly are added for the WebComponent
 - but **before** any *hook* method is invoked
 
-What you do in an *onLoad()* method is up to you.  Simply define it within your WebComponent using:
+What you do in an *onLoaded()* method is up to you.  Simply define it within your WebComponent using:
 
 
-        onLoad() {
+        onLoaded() {
           // your logic to be invoked when the WebComponent is loaded
         }
 
@@ -1648,9 +1655,65 @@ into the DOM.  The callback function passes the WebComponent instance as its arg
         });
 
 
+# Other Available Methods
+
+*mg-webComponents* provides further methods that are available to your Load/Render Modules, your
+Assembly Modules and also your WebComponent Modules.
+
+## Methods for loading Resources
+
+The resources needed by your WebComponents for their appearance and/or behaviour may only available
+as old-style files that are loaded using &lt;script&gt; and &lt;link&gt; tags.  Rather than
+loading them in the HTML file (which is, of course,  always an option, you can instead opt to
+download them dynamically.  This is a particularly good idea if you're designing a WebComponent Module
+Library from which many different applications could be built.  You can create a core/root WebComponent which
+looks after the loading of all the necessary resources needed by all the other WebCompnents in the Library.
+Users of the Library then don't need to worry about the resources: they are all included with the
+WebComponent Library and automatically loaded as needed.
+
+Take a look at the [wc-admin-ui](https://github.com/robtweed/wc-admin-ui) WebComponent Library which is built around a Bootstrap 4 and jQuery
+Admin UI framework.  The *onLoaded()* method of its 
+[*admninui-root*](https://github.com/robtweed/wc-admin-ui/blob/master/components/adminui-root.js)
+ component looks after the downloading of the necessary resources,
+all of which are also included with the WebComponent Library.
+
+If you want to do something similar, you can make use of the following methods:
+
+- webComponents.loadJSFile(src, loadCallback): Dynamically loads a JavaScript file from the specified *src* URI. When 
+the JavaScript file has loaded, the optional callback function is invoked, allowing you to control the sequence
+of loading of interdependent HJavaScript files.
+
+- webComponents.loadCSSFile(src, loadCallback): Dynamically loads a CSS Stylesheet file from the specified *src* URI. When 
+the CSS file has loaded, the optional callback function is invoked.
 
 
+## Method for Adding *Meta* Tags
 
+*mg-webComponents* also includes a method for optionally adding *meta* tags to the *head* section of the
+HTML page.  Once again, you may choose to explicitly define such tags in the HTML file, but this method provides
+the option of these tags being automatically and dynamically added, for example, by one of your WebComponent Modules.
+
+- webComponents.addMetaTag(attributes_object): adds a *meta* tag using the information defined in an object passed as an 
+argument.  The *attributes_object* structure is of the form:
+
+        {
+          name1: value1,
+          name2: value2,
+          ...etc
+        }
+
+
+creating a corrsponding *meta* tag:
+
+        <meta name1="value1" name2="value2" ...etc >
+
+
+For example, within a WebComponent Module:
+
+        this.addMetaTag({
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1, shrink-to-fit=no'
+        });
 
 
 
