@@ -1,7 +1,7 @@
 # mg-webComponents: Framework for Dynamic WebComponents
  
 Rob Tweed <rtweed@mgateway.com>  
-29 November 2019, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)  
+20 March 2020, M/Gateway Developments Ltd [http://www.mgateway.com](http://www.mgateway.com)  
 
 Twitter: @rtweed
 
@@ -26,6 +26,14 @@ to quickly and simply build applications of any degree of complexity.
 Note that this Module requires a browser with support for ES6 Modules and
 WebComponents.  It has been tested with the latest versions of Chrome, Firefox and
 Safari (desktop and iOS versions).
+
+
+# Check Out The Demo
+
+Try out the [live demonstration](http://178.62.26.29:8080/demo)
+ of a *mg-webComponents* WebComponents Module Library
+based around the SB Admin 2 Theme.
+
 
 
 # Back-End Compatibility
