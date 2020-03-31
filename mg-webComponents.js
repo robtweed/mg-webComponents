@@ -314,6 +314,9 @@ let webComponents = {
           if (assemblyName) {
             hooks = _this.componentHooks[assemblyName];
           }
+          else if (config.state && config.state.assemblyName) {
+            hooks = _this.componentHooks[config.state.assemblyName];
+          }
 
           if (config.hooks && hooks) {
             config.hooks.forEach(function(hook) {
