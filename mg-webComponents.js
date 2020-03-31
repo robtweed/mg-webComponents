@@ -24,7 +24,7 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 23 March 2020
+ 30 March 2020
 
  */
 
@@ -36,20 +36,34 @@ let count = 0;
 let webComponents = {
   components: {},
   hooks: {},
-  addComponent: function(componentName, config) {
-    if (!componentName) return;
+  componentHooks: {},
+  addComponent: function(assemblyName, config) {
+    if (!assemblyName) return;
     if (!config) return;
+
+    let hooks = {...config.hooks};
+    this.componentHooks[assemblyName] = {};
+
     let component;
     let name;
     if (config.hooks) {
       for (component in config.hooks) {
         if (!this.hooks[component]) this.hooks[component] = {};
+        if (!this.componentHooks[assemblyName][component]) this.componentHooks[assemblyName][component] = {};
         for (name in config.hooks[component]) {
           this.hooks[component][name] = config.hooks[component][name];
+          this.componentHooks[assemblyName][component][name] = hooks[component][name];
         }
       }
     }
-    if (config.component) this.components[componentName] = config.component;
+    if (config.component) {
+      if (!Array.isArray(config.component)) {
+        config.component = [config.component];
+      }
+      config.component[0].assemblyName = assemblyName;
+      this.components[assemblyName] = config.component;
+      //this.componentHooks[assemblyName] = hooks;
+    }
   },
   register: function(name, config) {
     registry[name] = config;
@@ -236,6 +250,7 @@ let webComponents = {
     if (!Array.isArray(configArr)) {
       configArr = [configArr];
     }
+    let assemblyName = configArr[0].assemblyName;
 
     let _this = this;
     let noOfComponents = configArr.length;
@@ -254,6 +269,13 @@ let webComponents = {
         if (_this.getCustomComponent(config.componentName)) {
           config = _this.expandCustomComponent(config);
           //console.log('expanded: ' + JSON.stringify(config, null, 2));
+        }
+
+        if (typeof config.if === 'function') {
+          if (!config.if(context)) {
+            loadComponent(no + 1);
+            return;
+          }
         }
 
         _this.load(config.componentName, targetEl, context, function(element) {
@@ -276,17 +298,29 @@ let webComponents = {
           element.methodsToRemove = [];
 
           if (config.state  && element.setState) {
+            for (let sname in config.state) {
+              if (typeof config.state[sname] === 'function') {
+                config.state[sname] = config.state[sname].call(element);
+              }
+            }
             element.setState(config.state);
           }
           if (element.onLoaded) {
             element.onLoaded();
           }
           // invoke any hooks
-          if (config.hooks && _this.hooks) {
+
+          let hooks = _this.hooks;
+          if (assemblyName) {
+            hooks = _this.componentHooks[assemblyName];
+          }
+
+          if (config.hooks && hooks) {
             config.hooks.forEach(function(hook) {
-              if (_this.hooks[config.componentName] && _this.hooks[config.componentName][hook]) {
+
+              if (hooks[config.componentName] && hooks[config.componentName][hook]) {
                 try {
-                  _this.hooks[config.componentName][hook].call(element, config.state);
+                  hooks[config.componentName][hook].call(element, config.state);
                 }
                 catch(err) {
                   if (log) {
@@ -297,7 +331,11 @@ let webComponents = {
               }
             });
           }
+
           if (config.children && element.childrenTarget) {
+            if (assemblyName) {
+              config.children[0].assemblyName = assemblyName;
+            }
             _this.loadGroup(config.children, element.childrenTarget, context, function() {
                loadComponent(no + 1);
             });
@@ -316,7 +354,11 @@ let webComponents = {
       hooks: ['loadedCallback']
     };
     if (!this.hooks[componentName]) this.hooks[componentName] = {};
+    if (!this.componentHooks[componentName]) this.componentHooks[componentName] = {};
     this.hooks[componentName].loadedCallback = function() {
+      callback(this);
+    };
+    this.componentHooks[componentName].loadedCallback = function() {
       callback(this);
     };
     this.loadGroup(assembly, targetElement, context);
