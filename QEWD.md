@@ -233,13 +233,12 @@ Here's the modified Assembly File (now named *step-q1.js*):
             'tutorial-button': {
               buttonClick: function() {
                 let _this = this;
-                let fn = function() {
-                  QEWD.send({                          // <===== (2)
-                    type: 'testMessage'                // <===== (3)
-                  }, function(responseObj) {
-                    let div = _this.getComponentByName('tutorial-div', 'display');
-                    div.setState({text: JSON.stringify(responseObj)});  // <===== (4)
+                let fn = async function() {              // <===== (3)
+                  let responseObj = await QEWD.reply({   // <===== (2)
+                    type: 'testMessage'                  // <===== (4)
                   });
+                  let div = _this.getComponentByName('tutorial-div', 'display');
+                  div.setState({text: JSON.stringify(responseObj)});    // <===== (5)
                 };
                 this.addHandler(fn, this.rootElement);
               }
@@ -257,11 +256,13 @@ Again, I've added comments with numbered arrows highlighting the changes that we
 - (2): So now we can use it within the *click* handler's method.  The closure created by this handler function
  means that the QEWD Object will
 be available to that handler method whenever the button is clicked.  Specifically, we'll send a WebSocket message to QEWD
-by using the *QEWD.send()* method.
-- (3): The QEWD Message Type we'll send is up to us - here we'll send a type of *testMessage*.  For the purpose of this
+by using the *QEWD.reply()* method.
+- (3): The *QEWD.reply()* method uses async/await, so the handler function must be declared as
+an async function.
+- (4): The QEWD Message Type we'll send is up to us - here we'll send a type of *testMessage*.  For the purpose of this
 demonnstration, we won't be sending any other parameters in the message, but we could, of course, add whatever additional
 parameters we want/need.
-- (4): within the *QEWD.send()*'s response callback function, we'll simply display the raw response received back from the
+- (4): In this simple example we'll simply display the raw response received back from the
 QEWD back-end as the text of the *div* tag under the button.
 
 
@@ -395,7 +396,7 @@ order to integrate *mg-webComponents* WebComponent modules and Assemblies with Q
 
 - pass the QEWD Object as an argument to your Assembly definition's exported function;
 - within the Assembly logic, any of the *hooks* that you define can then make use of the
-QEWD Object's methods and properties.  In the main you'll be using the *QEWD.send()* method.
+QEWD Object's methods and properties.  In the main you'll be using the *QEWD.reply()* method.
 
 If you want to see some advanced examples that use the SB Admin 2 themed WebComponent Module library
 wih QEWD, take a look at:
