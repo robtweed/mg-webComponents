@@ -24,7 +24,7 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 30 March 2020
+ 24 April 2020
 
  */
 
@@ -199,7 +199,11 @@ let webComponents = {
     //console.log('namespace = ' + namespace);
     //console.log('context: ' + JSON.stringify(context, null, 2));
     let jsPath = context.path || './';
-    if (context.paths && context.paths[namespace]) jsPath = context.paths[namespace];
+    if (context.paths && context.paths[namespace]) {
+      jsPath = context.paths[namespace];
+      if (jsPath.slice(-1) !== '/') jsPath = jsPath + '/';
+      jsPath = jsPath + 'components/';
+    }
 
     function invokeComponent(elementClass) {
       let element = new elementClass();
@@ -385,10 +389,11 @@ let webComponents = {
     }
     return findParent(this);
   },
-  getComponentByName(componentName, name) {
+  getComponentByName(componentName, name, parentNode) {
     //let customComponentElement = this.getCustomComponentElement(componentName, name);
     //if (customComponentElement) return customComponentElement;
-    let node = [...document.getElementsByTagName(componentName)];
+    parentNode = parentNode || document;
+    let node = [...parentNode.getElementsByTagName(componentName)];
     let i;
     for (i = 0; i < node.length; i++) {
       if (node[i].name === name) {
