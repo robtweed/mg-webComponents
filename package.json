@@ -1,6 +1,6 @@
 {
   "name": "mg-webcomponents",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "description": "Dynamically-loading WebComponents Framework",
   "main": "mg-webComponents.js",
   "scripts": {

@@ -24,7 +24,7 @@
  |  limitations under the License.                                           |
  ----------------------------------------------------------------------------
 
- 24 April 2020
+ 9 October 2020
 
  */
 
@@ -298,6 +298,8 @@ let webComponents = {
           element.loadJSFile = _this.loadJSFile;
           element.loadCSSFile = _this.loadCSSFile;
           element.loadGroup = _this.loadGroup.bind(_this);
+          element.loadAssembly = _this.loadAssembly.bind(_this);
+          element.loadWebComponent = _this.loadWebComponent.bind(_this);
           element.getInstanceFromRegistry = _this.getInstanceFromRegistry;
           element.methodsToRemove = [];
 
@@ -355,6 +357,21 @@ let webComponents = {
     }
     loadComponent(0);
   },
+
+  loadAssemblyPromise: async function(configArr, targetElement, context) {
+    let _this = this;
+    return new Promise((resolve) => {
+      _this.loadGroup(configArr, targetElement, context, function() {
+        resolve();
+      });
+    });
+  },
+
+  loadAssembly: async function(configArr, targetElement, context) {
+    return await this.loadAssemblyPromise(configArr, targetElement, context);
+  },
+
+
   loadWebComponent(componentName, targetElement, context, callback) {
     let assembly = {
       componentName: componentName,
